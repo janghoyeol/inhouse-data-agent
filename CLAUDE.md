@@ -11,7 +11,9 @@
   - 가상 고객사 이름: **Tucanova** (투카노바)
 - [x] 1. 고객 요구사항(`docs/customer-brief.md`) · Olist 내려받기(해시)·변환·합성 덧층·Postgres 적재(41초) · 함정 12개 실측(`docs/schema-notes.md`) · Compose · CI
   - 테스트 20개 (오프라인 15 + 적재 통합 5, `TEST_DATABASE_URL`). 이 세션 컨테이너에선 이미지 pull이 막혀 Compose 실제 실행은 못 했고 로컬 PG16으로 검증
-- [ ] 2. DB 역할·RLS·마스킹 뷰 + 테스트
+- [x] 2. 권한 (ADR 0002): 직원별 DB 로그인 역할, `session_user` 기준 RLS(고객 UF → 주문 → 하위 표), 개인정보 열 권한 + CS 마스킹 뷰, 쓰기 권한 없음
+  - 테스트 15개 (우회 시도 포함), 정책을 일부러 망가뜨린 4가지 변형 모두 테스트가 잡음. 전체 데이터 집계 0.05~0.34초
+  - 로컬 PG는 TCP에 scram 인증 (CI와 같게). 직원 역할 비밀번호 `TCN_USER_PASSWORD`
 - [ ] 3. `run_sql` 안전장치(파서·읽기 전용·타임아웃·행 상한·감사 로그) + 테스트
 - [ ] 4. 지표 사전 + 탐색 도구
 - [ ] 5. 정답셋 50문항(정답 SQL은 호열이 직접) + 평가 → Haiku/Sonnet 첫 측정

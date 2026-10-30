@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
-      - name: 오프라인 + 적재 통합 테스트
+      - name: 오프라인 + 적재·권한 통합 테스트
         env:
           TEST_DATABASE_URL: postgresql://postgres:ci@localhost:5432/ci
         run: python -m unittest discover -s tests -t . -v

@@ -18,4 +18,4 @@ dependencies = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-"inhouse.data" = ["schema.sql"]
+"inhouse.data" = ["schema.sql", "security.sql"]

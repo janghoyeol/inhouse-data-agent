@@ -2,7 +2,8 @@
 -- 실제 사내 DB처럼 설명은 짧고, 함정은 docs/schema-notes.md에만 적는다.
 -- 카테고리(prd.ctgr_cd → ctgr)에는 일부러 FK가 없다: 원본에 번역 표에 없는 카테고리가 있다.
 
-DROP TABLE IF EXISTS rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
+DROP VIEW IF EXISTS v_cust_contact;
+DROP TABLE IF EXISTS db_user, rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
     cd_ord_stat, st, rgn CASCADE;
 
 CREATE TABLE rgn (

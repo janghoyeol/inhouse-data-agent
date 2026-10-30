@@ -1,8 +1,9 @@
 # inhouse-data-agent
 
-**가상 고객사** Tucanova의 사내 DB에 자연어로 묻고, 사용자 권한 안에서, 숫자마다 그 숫자를 만든 SQL을 출처로 붙여 답하는 데이터 에이전트. (진행 중: 1단계 데이터 층 완료)
+**가상 고객사** Tucanova의 사내 DB에 자연어로 묻고, 사용자 권한 안에서, 숫자마다 그 숫자를 만든 SQL을 출처로 붙여 답하는 데이터 에이전트. (진행 중: 데이터 층·권한 완료)
 
-- 권한은 프롬프트가 아니라 DB가 강제한다 (PostgreSQL 행 단위 보안·읽기 전용 역할).
+- 권한은 프롬프트가 아니라 DB가 강제한다: 직원별 DB 역할, `session_user` 기준 행 단위 보안, 개인정보 열 권한·마스킹 뷰, 쓰기 권한 없음.
+  모델이 쓸 법한 우회 SQL(`SET ROLE`, `set_config`, `row_security=off`, `pg_stats`)까지 테스트로 막는다 ([ADR 0002](docs/decisions/0002-permission-model.md)).
 - "매출"처럼 고객마다 뜻이 다른 단어는 지표 사전으로 고정하고, 정답 SQL 50문항으로 정확도를 측정한다.
 - 고객 요구사항: [docs/customer-brief.md](docs/customer-brief.md) · 스키마와 함정: [docs/schema-notes.md](docs/schema-notes.md) · 설계: [docs/decisions](docs/decisions/)
 
@@ -27,7 +28,7 @@ Docker 없이:
 ```bash
 pip install -e .
 python -m inhouse.data.fetch                                  # data/raw/
-DATABASE_URL=postgresql://... python -m inhouse.data.load
+DATABASE_URL=postgresql://... TCN_USER_PASSWORD=... python -m inhouse.data.load   # 직원 역할 비밀번호
 python -m unittest discover -s tests -t .                     # 오프라인 테스트
-TEST_DATABASE_URL=postgresql://.../빈DB python -m unittest discover -s tests -t .   # + 적재 통합 테스트 (그 DB의 표를 지움)
+TEST_DATABASE_URL=postgresql://.../빈DB python -m unittest discover -s tests -t .   # + 적재·권한 통합 테스트 (그 DB의 표를 지움, 슈퍼유저)
 ```

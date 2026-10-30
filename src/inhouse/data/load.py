@@ -1,6 +1,7 @@
 """Olist 원본 + 합성 덧층을 Postgres에 적재한다. 기존 표는 지우고 새로 만든다.
 
 사용법: python -m inhouse.data.load --raw data/raw [--dsn postgresql://...]  (기본 DSN: DATABASE_URL)
+직원 로그인 역할(u_e001 …)의 비밀번호는 TCN_USER_PASSWORD (2단계 권한, security.sql).
 """
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ from importlib import resources
 
 import pandas as pd
 import psycopg
+from psycopg import sql
 
 from . import overlay, transform
 
@@ -30,17 +32,25 @@ def _copy(cur, name: str, df: pd.DataFrame) -> None:
         cp.write(buf.getvalue())
 
 
-def load(tables: dict[str, pd.DataFrame], dsn: str, log=print) -> dict[str, int]:
+def _sql(name: str) -> str:
+    return resources.files("inhouse.data").joinpath(name).read_text(encoding="utf-8")
+
+
+def load(tables: dict[str, pd.DataFrame], dsn: str, log=print, user_password: str | None = None) -> dict[str, int]:
     missing = set(ORDER) ^ set(tables)
     if missing:
         raise ValueError(f"표 목록이 맞지 않음: {sorted(missing)}")
-    ddl = resources.files("inhouse.data").joinpath("schema.sql").read_text(encoding="utf-8")
     with psycopg.connect(dsn) as conn, conn.cursor() as cur:
-        cur.execute(ddl)
+        cur.execute(_sql("schema.sql"))
         for name in ORDER:
             t0 = time.time()
             _copy(cur, name, tables[name])
             log(f"  {name}: {len(tables[name]):,}행 ({time.time() - t0:.1f}s)")
+        cur.execute(_sql("security.sql"))
+        if user_password:
+            for (role,) in cur.execute("SELECT db_role FROM db_user ORDER BY 1").fetchall():
+                cur.execute(sql.SQL("ALTER ROLE {} PASSWORD {}").format(sql.Identifier(role), sql.Literal(user_password)))
+        log("  권한: 역할·RLS·마스킹 뷰 적용")
         conn.commit()
         conn.autocommit = True
         cur.execute("ANALYZE")
@@ -58,7 +68,10 @@ def main() -> None:
     t0 = time.time()
     tables = overlay.apply(transform.build(transform.read_raw(a.raw)), seed=a.seed)
     print(f"변환 + 합성 {time.time() - t0:.1f}s")
-    load(tables, a.dsn)
+    password = os.environ.get("TCN_USER_PASSWORD")
+    if not password:
+        print("TCN_USER_PASSWORD 없음: 직원 역할에 비밀번호를 안 걸어서 비밀번호 인증으로는 접속할 수 없습니다")
+    load(tables, a.dsn, user_password=password)
     print(f"완료 {time.time() - t0:.1f}s")
 
 

@@ -15,6 +15,7 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql://postgres:tucanova-local@db:5432/tucanova
+      TCN_USER_PASSWORD: tucanova-local   # 직원 역할(u_e001 …) 공통 비밀번호, 로컬 전용
     volumes: [rawdata:/data]
     depends_on:
       db: {condition: service_healthy}
