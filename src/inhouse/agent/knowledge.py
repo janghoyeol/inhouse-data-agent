@@ -50,6 +50,6 @@ def lookup(query: str) -> dict[str, Any]:
             "common_rules": k["common_rules"],
         }
     out = {key: best[key] for key in ["id", "name", "aliases", "definition", "rules", "status", "sql"]}
-    out["open_questions"] = best.get("open_questions", [])
+    out["decisions"] = best.get("decisions", [])
     out["sql_note"] = "{start}/{end}에 현지 날짜(YYYY-MM-DD, end는 포함 안 함)를 넣어 쓰세요."
     return {"metric": out, "common_rules": k["common_rules"]}

@@ -21,6 +21,11 @@
   - 지표 SQL을 pandas 독립 계산과 맞춰 검산, 지표 변형 2개(환불 이중 차감·cust_no 재구매)를 테스트가 잡음. 테스트 총 67개. 전체 데이터 지표 0.1~0.9초(따뜻할 때)
   - 지표는 전부 status: draft — open_questions 7개를 사용자(가상 데이터팀장 역할)와 합의 대기
   - 로컬 테스트는 별도 클러스터(5434, `TEST_DATABASE_URL=postgresql://postgres:pgtest@127.0.0.1:5434/t`)로. 5433은 본 데이터(직원 비밀번호 tucanova-local)
-- [ ] 5. 정답셋 50문항(정답 SQL은 호열이 직접) + 평가 → Haiku/Sonnet 첫 측정
+- [x] 지표 11개 전부 합의(2026-10-30, 초안대로): status agreed, decisions에 질문 → 결정 기록
+- [~] 5. 정답셋·평가
+  - [x] 에이전트 루프(`agent.py`, Haiku 5.5 기본, 직접 루프로 도구 호출 기록, 시스템 프롬프트 캐시), 질문 50개(`eval/questions.yaml`, 5분류×10, 거절 3), 채점(`eval/match.py`: 값 기준·인용 여부 구분), `inhouse.eval.run`, `inhouse.eval.check_gold`
+  - [x] 라이브 4문항(Haiku 5.5, 합계 $0.0042): 매출(본사·남동부) 지표 SQL과 같은 값·인용, 블프는 합의된 '주문 수' 정의로 1,166(취소 포함 1,176은 정의 밖), 전화번호 요청 거절
+  - [ ] 정답 SQL 47개 — 호열 작성 (`eval/README.md`), 제가 check_gold로 검산
+  - [ ] Haiku/Sonnet 첫 측정 (Haiku 50문항 약 $0.05, Sonnet 약 $1 예상)
 - [ ] 6. 웹 화면(사용자 전환) → CI → showcase 카드
 - [ ] 2단계(별도 ADR): 사내 문서 RAG + 쓰기 작업 승인 흐름

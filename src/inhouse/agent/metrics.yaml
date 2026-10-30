@@ -2,7 +2,7 @@
 # - common_rules: 모든 질문에 적용되는 규칙 (에이전트 시스템 프롬프트에도 들어간다)
 # - metrics: 이름·별칭·정의·규칙·예시 SQL. SQL의 {start}/{end}는 현지(America/Sao_Paulo) 날짜, end는 포함하지 않음
 # - column_notes: DB 주석에는 없는 온보딩 지식 (describe_table이 열 설명에 붙인다)
-# status: draft = 초안(합의 대기), agreed = 합의됨. open_questions = 데이터팀장에게 확인할 것
+# status: draft = 초안(합의 대기), agreed = 합의됨. decisions = 데이터팀장과 정한 것 (질문 → 결정)
 
 common_rules:
   - "날짜·기간은 브라질 현지(America/Sao_Paulo) 기준이다. 시각 열(ord_dtm 등)은 UTC로 저장돼 있으니 날짜는 (ord_dtm AT TIME ZONE 'America/Sao_Paulo')::date, 기간 조건은 ord_dtm >= TIMESTAMP 'YYYY-MM-DD' AT TIME ZONE 'America/Sao_Paulo' 형태로 쓴다."
@@ -28,10 +28,11 @@ metrics:
       - 배송비(dlv_fee) 제외
       - 환불은 유효 주문에 대한 것만 뺀다. 취소 주문의 전액 환불은 이미 제외된 주문이라 또 빼지 않는다
       - 기간은 주문일(현지) 기준. 환불도 원래 주문의 주문일 기간에 귀속
-    status: draft
-    open_questions:
-      - 매출에 배송비를 포함할지 (지금 초안은 제외. 포함한 값은 gmv에 가깝다)
-      - 환불을 주문일 기간에 귀속할지, 환불일 기간에 귀속할지 (지금 초안은 주문일)
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 매출에 배송비를 포함할지 → 제외. 포함한 값은 gmv에 가깝다
+      - 환불을 주문일 기간에 귀속할지, 환불일 기간에 귀속할지 → 주문일
     sql: |
       WITH v AS (
         SELECT ord_no FROM ord
@@ -49,8 +50,9 @@ metrics:
     rules:
       - 유효 주문만 (테스트·취소·불가 제외)
       - 배송비 포함, 환불 차감하지 않음
-    status: draft
-    open_questions: []
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions: []
     sql: |
       SELECT round(coalesce(sum(i.sale_amt + i.dlv_fee), 0), 2) AS gmv
       FROM ord o JOIN ord_item i USING (ord_no)
@@ -65,9 +67,10 @@ metrics:
     rules:
       - 테스트·취소·불가 제외
       - 아직 배송 중인 주문(shipped 등)은 포함
-    status: draft
-    open_questions:
-      - 취소·불가 주문까지 센 '접수 주문 수'가 따로 필요한지
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 취소·불가 주문까지 센 '접수 주문 수'가 따로 필요한지 → 필요 없음 (유효 주문 수만)
     sql: |
       SELECT count(*) AS order_count FROM ord
       WHERE NOT is_test AND stat_cd NOT IN (90, 91)
@@ -81,8 +84,9 @@ metrics:
     rules:
       - cust_no가 아니라 cust_uid로 센다
       - 탈퇴 고객도 그 기간에 주문했으면 센다
-    status: draft
-    open_questions: []
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions: []
     sql: |
       SELECT count(DISTINCT c.cust_uid) AS customer_count
       FROM ord o JOIN cust c USING (cust_no)
@@ -97,9 +101,10 @@ metrics:
     rules:
       - 사람 단위는 cust_uid
       - 같은 기간 안에서만 본다 (기간 밖의 이전 구매는 세지 않음)
-    status: draft
-    open_questions:
-      - 기간 이전에 산 적이 있는 사람이 기간 안에 한 번 산 것도 재구매로 볼지 (지금 초안은 아니오)
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 기간 이전에 산 적이 있는 사람이 기간 안에 한 번 산 것도 재구매로 볼지 → 아니오
     sql: |
       WITH per AS (
         SELECT c.cust_uid, count(*) AS n
@@ -118,9 +123,10 @@ metrics:
     rules:
       - 유효 주문만
       - 배송비 제외, 환불 차감 전
-    status: draft
-    open_questions:
-      - 객단가에 환불을 반영할지 (지금 초안은 반영하지 않음)
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 객단가에 환불을 반영할지 → 반영하지 않음
     sql: |
       WITH v AS (
         SELECT ord_no FROM ord
@@ -137,9 +143,10 @@ metrics:
     definition: "테스트를 뺀 주문 중 취소(90)·주문 불가(91) 비율 (%)"
     rules:
       - 분모는 테스트를 뺀 모든 주문 (상태 무관)
-    status: draft
-    open_questions:
-      - 주문 불가(91, 재고 없음)를 취소에 포함할지 (지금 초안은 포함)
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 주문 불가(91, 재고 없음)를 취소에 포함할지 → 포함
     sql: |
       SELECT round(100.0 * count(*) FILTER (WHERE stat_cd IN (90, 91)) / nullif(count(*), 0), 2) AS cancel_rate_pct
       FROM ord
@@ -154,9 +161,10 @@ metrics:
     rules:
       - 분모는 테스트를 뺀 배송 완료 주문
       - 환불 사유 CNCL(취소) 제외
-    status: draft
-    open_questions:
-      - 건수 비율이 아니라 금액 비율(환불 금액 / 매출)이 필요한지
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 건수 비율이 아니라 금액 비율(환불 금액 / 매출)이 필요한지 → 건수 비율
     sql: |
       SELECT round(100.0 * count(*) FILTER (WHERE EXISTS (
                SELECT 1 FROM rfnd r WHERE r.ord_no = o.ord_no AND r.rsn_cd <> 'CNCL'))
@@ -173,8 +181,9 @@ metrics:
     rules:
       - 테스트 제외, 배송 완료(60)이면서 배송 완료 시각이 있는 주문
       - 시각 차이(시간 포함)를 일 단위로
-    status: draft
-    open_questions: []
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions: []
     sql: |
       SELECT round(avg(extract(epoch FROM dlv_cust_dtm - ord_dtm) / 86400)::numeric, 2) AS avg_delivery_days
       FROM ord
@@ -188,8 +197,9 @@ metrics:
     definition: "배송 완료 주문 중 실제 도착일(현지)이 예상 배송일보다 늦은 비율 (%)"
     rules:
       - 도착일은 dlv_cust_dtm을 현지 날짜로 바꿔 est_dlv_dt와 비교
-    status: draft
-    open_questions: []
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions: []
     sql: |
       SELECT round(100.0 * count(*) FILTER (
                WHERE (dlv_cust_dtm AT TIME ZONE 'America/Sao_Paulo')::date > est_dlv_dt)
@@ -206,9 +216,10 @@ metrics:
     rules:
       - 테스트 주문 제외 (취소 주문 리뷰는 포함)
       - 주문당 ans_dtm이 가장 늦은 리뷰 1건
-    status: draft
-    open_questions:
-      - 취소 주문의 리뷰도 평균에 넣을지 (지금 초안은 넣음)
+    status: agreed
+    agreed: "2026-10-30 데이터팀장(가상) 확인 — 초안대로 확정"
+    decisions:
+      - 취소 주문의 리뷰도 평균에 넣을지 → 넣음
     sql: |
       WITH last AS (
         SELECT DISTINCT ON (r.ord_no) r.ord_no, r.score
