@@ -1,0 +1,24 @@
+# 로컬 개발용. 비밀번호는 로컬 전용 값이다 (배포에 쓰지 않음).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tucanova
+      POSTGRES_PASSWORD: tucanova-local
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      retries: 30
+  loader:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:tucanova-local@db:5432/tucanova
+    volumes: [rawdata:/data]
+    depends_on:
+      db: {condition: service_healthy}
+    profiles: [tools]
+volumes:
+  pgdata:
+  rawdata:

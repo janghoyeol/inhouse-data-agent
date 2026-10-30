@@ -8,8 +8,9 @@
 
 ## 진행 상황
 - [x] ADR 0001 (1단계: SQL) 채택 2026-10-30: 이커머스 · Olist(CC BY-NC-SA 4.0, 원본 CSV는 레포에 안 넣음) + 합성 덧층 · PostgreSQL · 탐색 도구 + 지표 사전 · 웹 먼저
-  - [ ] 가상 고객사 이름: Tucanova / Mercalua / Ipê Market 중 선택 대기
-- [ ] 1. 고객 요구사항 문서 → Olist 내려받기·적재 + 합성 덧층 + 스키마·함정 목록 → Docker Compose
+  - 가상 고객사 이름: **Tucanova** (투카노바)
+- [x] 1. 고객 요구사항(`docs/customer-brief.md`) · Olist 내려받기(해시)·변환·합성 덧층·Postgres 적재(41초) · 함정 12개 실측(`docs/schema-notes.md`) · Compose · CI
+  - 테스트 20개 (오프라인 15 + 적재 통합 5, `TEST_DATABASE_URL`). 이 세션 컨테이너에선 이미지 pull이 막혀 Compose 실제 실행은 못 했고 로컬 PG16으로 검증
 - [ ] 2. DB 역할·RLS·마스킹 뷰 + 테스트
 - [ ] 3. `run_sql` 안전장치(파서·읽기 전용·타임아웃·행 상한·감사 로그) + 테스트
 - [ ] 4. 지표 사전 + 탐색 도구
