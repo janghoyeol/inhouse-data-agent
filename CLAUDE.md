@@ -17,7 +17,10 @@
 - [x] 3. `run_sql` 안전장치 (ADR 0003): sqlglot 검사(안내 층) → 직원 역할·읽기 전용 트랜잭션·SET LOCAL 타임아웃·서버 커서 행 상한 → JSONL 감사 로그·쿼리 ID
   - 테스트 12개 (검사 3 + 실행 9), 총 47개. runner 변형 4개(읽기 전용·타임아웃·행 상한·검사 건너뛰기) 모두 테스트가 잡음
   - DB 역할은 클러스터 공용 → 같은 클러스터에서 통합 테스트하면 직원 비밀번호가 바뀜. 콜드 캐시 첫 쿼리 1.6초(따뜻하면 0.1초)
-- [ ] 4. 지표 사전 + 탐색 도구
+- [x] 4. 지표 사전(`src/inhouse/agent/metrics.yaml`: 공통 규칙 12 · 지표 11 · 열 메모) + 도구 4개(`tools.py`: list_tables·describe_table·lookup_metric·run_sql, 전부 직원 역할로)
+  - 지표 SQL을 pandas 독립 계산과 맞춰 검산, 지표 변형 2개(환불 이중 차감·cust_no 재구매)를 테스트가 잡음. 테스트 총 68개. 전체 데이터 지표 0.1~0.9초(따뜻할 때)
+  - 지표는 전부 status: draft — open_questions 7개를 사용자(가상 데이터팀장 역할)와 합의 대기
+  - 로컬 테스트는 별도 클러스터(5434, `TEST_DATABASE_URL=postgresql://postgres:pgtest@127.0.0.1:5434/t`)로. 5433은 본 데이터(직원 비밀번호 tucanova-local)
 - [ ] 5. 정답셋 50문항(정답 SQL은 호열이 직접) + 평가 → Haiku/Sonnet 첫 측정
 - [ ] 6. 웹 화면(사용자 전환) → CI → showcase 카드
 - [ ] 2단계(별도 ADR): 사내 문서 RAG + 쓰기 작업 승인 흐름

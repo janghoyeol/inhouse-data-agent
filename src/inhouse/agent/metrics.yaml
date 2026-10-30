@@ -1,0 +1,259 @@
+# Tucanova 지표 사전 (4단계). 가상 고객사 데이터팀장과 합의하는 문서라는 설정.
+# - common_rules: 모든 질문에 적용되는 규칙 (에이전트 시스템 프롬프트에도 들어간다)
+# - metrics: 이름·별칭·정의·규칙·예시 SQL. SQL의 {start}/{end}는 현지(America/Sao_Paulo) 날짜, end는 포함하지 않음
+# - column_notes: DB 주석에는 없는 온보딩 지식 (describe_table이 열 설명에 붙인다)
+# status: draft = 초안(합의 대기), agreed = 합의됨. open_questions = 데이터팀장에게 확인할 것
+
+common_rules:
+  - "날짜·기간은 브라질 현지(America/Sao_Paulo) 기준이다. 시각 열(ord_dtm 등)은 UTC로 저장돼 있으니 날짜는 (ord_dtm AT TIME ZONE 'America/Sao_Paulo')::date, 기간 조건은 ord_dtm >= TIMESTAMP 'YYYY-MM-DD' AT TIME ZONE 'America/Sao_Paulo' 형태로 쓴다."
+  - "테스트 주문(ord.is_test = true)은 항상 제외한다. 테스트 계정(cust.is_test_acct)도 고객 수에서 뺀다."
+  - "유효 주문 = 테스트 제외, 주문 상태 취소(90)·주문 불가(91) 제외. 상태 이름은 cd_ord_stat에 있다 (60 = 배송 완료)."
+  - "고객(사람) 단위는 cust.cust_uid다. cust_no는 주문마다 새로 생기는 번호라 고객 수·재구매를 셀 때 쓰면 안 된다."
+  - "권역은 고객 주소의 주(cust.uf) → st.rgn_cd 로 정한다 (판매자 주소가 아님). 권역 이름은 rgn.rgn_nm_ko."
+  - "금액 단위는 헤알(BRL). 매출은 결제(ord_pay)가 아니라 품목 판매가(ord_item.sale_amt)로 센다. 결제는 바우처 분할·할부 때문에 품목 합과 다르다."
+  - "mon_sls_smry_old는 2017년까지의 구 시스템 요약표다. 천 헤알 단위이고 정의가 다르므로(배송비 포함, 취소만 제외) 지표 계산에 쓰지 않는다. 구 시스템 수치를 직접 물을 때만 쓰고, 단위와 정의 차이를 밝힌다."
+  - "카테고리 이름은 prd.ctgr_cd를 ctgr에 LEFT JOIN 한 ctgr_nm_en. 번역이 없으면 코드 그대로, 코드도 없으면 '미분류'. INNER JOIN 하면 상품이 빠진다."
+  - "좌표 geo_zip은 우편번호 앞자리마다 여러 행이 있다. 조인하기 전에 zip_pfx별 평균으로 한 행으로 만든다."
+  - "리뷰(rvw)는 주문 하나에 여러 건일 수 있고 rvw_id도 중복된다. 주문당 가장 최근 답변(ans_dtm) 1건만 쓴다."
+  - "권역 매니저가 보는 결과는 자기 권역만이다 (DB가 거른다). 답에 '보이는 범위 기준'임을 밝힌다."
+  - "정의가 없는 지표를 물으면 사용한 가정(포함·제외 기준, 날짜 기준)을 답에 밝힌다."
+
+metrics:
+  - id: net_sales
+    name: 순매출
+    aliases: [매출, 매출액, 판매액, revenue, sales, net sales]
+    definition: "유효 주문의 품목 판매가 합계에서, 그 주문들에 대한 환불 금액을 뺀 값 (헤알, 배송비 제외)"
+    rules:
+      - 유효 주문만 (테스트·취소·불가 제외)
+      - 배송비(dlv_fee) 제외
+      - 환불은 유효 주문에 대한 것만 뺀다. 취소 주문의 전액 환불은 이미 제외된 주문이라 또 빼지 않는다
+      - 기간은 주문일(현지) 기준. 환불도 원래 주문의 주문일 기간에 귀속
+    status: draft
+    open_questions:
+      - 매출에 배송비를 포함할지 (지금 초안은 제외. 포함한 값은 gmv에 가깝다)
+      - 환불을 주문일 기간에 귀속할지, 환불일 기간에 귀속할지 (지금 초안은 주문일)
+    sql: |
+      WITH v AS (
+        SELECT ord_no FROM ord
+        WHERE NOT is_test AND stat_cd NOT IN (90, 91)
+          AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+          AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+      )
+      SELECT round((SELECT coalesce(sum(i.sale_amt), 0) FROM ord_item i JOIN v USING (ord_no))
+                 - (SELECT coalesce(sum(r.rfnd_amt), 0) FROM rfnd r JOIN v USING (ord_no)), 2) AS net_sales
+
+  - id: gmv
+    name: 총거래액
+    aliases: [거래액, 거래 총액]
+    definition: "유효 주문의 품목 판매가 + 배송비 합계 (환불 차감 전)"
+    rules:
+      - 유효 주문만 (테스트·취소·불가 제외)
+      - 배송비 포함, 환불 차감하지 않음
+    status: draft
+    open_questions: []
+    sql: |
+      SELECT round(coalesce(sum(i.sale_amt + i.dlv_fee), 0), 2) AS gmv
+      FROM ord o JOIN ord_item i USING (ord_no)
+      WHERE NOT o.is_test AND o.stat_cd NOT IN (90, 91)
+        AND o.ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND o.ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: order_count
+    name: 주문 수
+    aliases: [주문 건수, 유효 주문 수, orders]
+    definition: "기간 안에 들어온 유효 주문 건수"
+    rules:
+      - 테스트·취소·불가 제외
+      - 아직 배송 중인 주문(shipped 등)은 포함
+    status: draft
+    open_questions:
+      - 취소·불가 주문까지 센 '접수 주문 수'가 따로 필요한지
+    sql: |
+      SELECT count(*) AS order_count FROM ord
+      WHERE NOT is_test AND stat_cd NOT IN (90, 91)
+        AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: customer_count
+    name: 구매 고객 수
+    aliases: [고객 수, 구매자 수, customers]
+    definition: "기간 안에 유효 주문을 한 사람 수 (cust_uid 기준)"
+    rules:
+      - cust_no가 아니라 cust_uid로 센다
+      - 탈퇴 고객도 그 기간에 주문했으면 센다
+    status: draft
+    open_questions: []
+    sql: |
+      SELECT count(DISTINCT c.cust_uid) AS customer_count
+      FROM ord o JOIN cust c USING (cust_no)
+      WHERE NOT o.is_test AND o.stat_cd NOT IN (90, 91)
+        AND o.ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND o.ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: repeat_rate
+    name: 재구매율
+    aliases: [재구매 비율, 재구매, repeat rate]
+    definition: "기간 안에 유효 주문을 2건 이상 한 사람 / 유효 주문을 한 사람 (%)"
+    rules:
+      - 사람 단위는 cust_uid
+      - 같은 기간 안에서만 본다 (기간 밖의 이전 구매는 세지 않음)
+    status: draft
+    open_questions:
+      - 기간 이전에 산 적이 있는 사람이 기간 안에 한 번 산 것도 재구매로 볼지 (지금 초안은 아니오)
+    sql: |
+      WITH per AS (
+        SELECT c.cust_uid, count(*) AS n
+        FROM ord o JOIN cust c USING (cust_no)
+        WHERE NOT o.is_test AND o.stat_cd NOT IN (90, 91)
+          AND o.ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+          AND o.ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+        GROUP BY c.cust_uid
+      )
+      SELECT round(100.0 * count(*) FILTER (WHERE n >= 2) / nullif(count(*), 0), 2) AS repeat_rate_pct FROM per
+
+  - id: aov
+    name: 객단가
+    aliases: [평균 주문 금액, 주문당 평균 금액]
+    definition: "유효 주문의 품목 판매가 합 / 유효 주문 수 (헤알, 배송비 제외, 환불 차감 전)"
+    rules:
+      - 유효 주문만
+      - 배송비 제외, 환불 차감 전
+    status: draft
+    open_questions:
+      - 객단가에 환불을 반영할지 (지금 초안은 반영하지 않음)
+    sql: |
+      WITH v AS (
+        SELECT ord_no FROM ord
+        WHERE NOT is_test AND stat_cd NOT IN (90, 91)
+          AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+          AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+      )
+      SELECT round((SELECT coalesce(sum(i.sale_amt), 0) FROM ord_item i JOIN v USING (ord_no))
+                   / nullif((SELECT count(*) FROM v), 0), 2) AS aov
+
+  - id: cancel_rate
+    name: 취소율
+    aliases: [주문 취소율, 취소 비율, cancel rate]
+    definition: "테스트를 뺀 주문 중 취소(90)·주문 불가(91) 비율 (%)"
+    rules:
+      - 분모는 테스트를 뺀 모든 주문 (상태 무관)
+    status: draft
+    open_questions:
+      - 주문 불가(91, 재고 없음)를 취소에 포함할지 (지금 초안은 포함)
+    sql: |
+      SELECT round(100.0 * count(*) FILTER (WHERE stat_cd IN (90, 91)) / nullif(count(*), 0), 2) AS cancel_rate_pct
+      FROM ord
+      WHERE NOT is_test
+        AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: refund_rate
+    name: 환불률
+    aliases: [환불 비율, 반품률, refund rate]
+    definition: "배송 완료(60) 주문 중 환불이 한 번이라도 있는 주문 비율 (%). 취소에 따른 환불은 제외"
+    rules:
+      - 분모는 테스트를 뺀 배송 완료 주문
+      - 환불 사유 CNCL(취소) 제외
+    status: draft
+    open_questions:
+      - 건수 비율이 아니라 금액 비율(환불 금액 / 매출)이 필요한지
+    sql: |
+      SELECT round(100.0 * count(*) FILTER (WHERE EXISTS (
+               SELECT 1 FROM rfnd r WHERE r.ord_no = o.ord_no AND r.rsn_cd <> 'CNCL'))
+             / nullif(count(*), 0), 2) AS refund_rate_pct
+      FROM ord o
+      WHERE NOT o.is_test AND o.stat_cd = 60
+        AND o.ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND o.ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: avg_delivery_days
+    name: 평균 배송일
+    aliases: [배송 기간, 배송 소요일, 평균 배송 기간, delivery days]
+    definition: "배송 완료 주문의 주문 시각부터 배송 완료 시각까지 평균 일수"
+    rules:
+      - 테스트 제외, 배송 완료(60)이면서 배송 완료 시각이 있는 주문
+      - 시각 차이(시간 포함)를 일 단위로
+    status: draft
+    open_questions: []
+    sql: |
+      SELECT round(avg(extract(epoch FROM dlv_cust_dtm - ord_dtm) / 86400)::numeric, 2) AS avg_delivery_days
+      FROM ord
+      WHERE NOT is_test AND stat_cd = 60 AND dlv_cust_dtm IS NOT NULL
+        AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: late_rate
+    name: 배송 지연율
+    aliases: [지연율, 지연 배송률, late delivery rate]
+    definition: "배송 완료 주문 중 실제 도착일(현지)이 예상 배송일보다 늦은 비율 (%)"
+    rules:
+      - 도착일은 dlv_cust_dtm을 현지 날짜로 바꿔 est_dlv_dt와 비교
+    status: draft
+    open_questions: []
+    sql: |
+      SELECT round(100.0 * count(*) FILTER (
+               WHERE (dlv_cust_dtm AT TIME ZONE 'America/Sao_Paulo')::date > est_dlv_dt)
+             / nullif(count(*), 0), 2) AS late_rate_pct
+      FROM ord
+      WHERE NOT is_test AND stat_cd = 60 AND dlv_cust_dtm IS NOT NULL
+        AND ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+        AND ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+
+  - id: avg_review_score
+    name: 평균 리뷰 점수
+    aliases: [리뷰 점수, 평점, 평균 평점, review score]
+    definition: "기간 안 주문들의 리뷰 점수 평균. 주문당 가장 최근 답변 1건만"
+    rules:
+      - 테스트 주문 제외 (취소 주문 리뷰는 포함)
+      - 주문당 ans_dtm이 가장 늦은 리뷰 1건
+    status: draft
+    open_questions:
+      - 취소 주문의 리뷰도 평균에 넣을지 (지금 초안은 넣음)
+    sql: |
+      WITH last AS (
+        SELECT DISTINCT ON (r.ord_no) r.ord_no, r.score
+        FROM rvw r JOIN ord o USING (ord_no)
+        WHERE NOT o.is_test
+          AND o.ord_dtm >= TIMESTAMP '{start}' AT TIME ZONE 'America/Sao_Paulo'
+          AND o.ord_dtm <  TIMESTAMP '{end}' AT TIME ZONE 'America/Sao_Paulo'
+        ORDER BY r.ord_no, r.ans_dtm DESC NULLS LAST, r.rvw_sn DESC
+      )
+      SELECT round(avg(score), 2) AS avg_review_score FROM last
+
+column_notes:
+  ord:
+    ord_dtm: "UTC로 저장. 현지 날짜는 (ord_dtm AT TIME ZONE 'America/Sao_Paulo')::date"
+    aprv_dtm: "UTC로 저장"
+    dlv_cust_dtm: "UTC로 저장. 배송 완료가 아니면 NULL"
+    stat_cd: "cd_ord_stat 참조. 10 생성, 20 승인, 30 송장, 40 출고 준비, 50 배송 중, 60 배송 완료, 90 취소, 91 주문 불가"
+    is_test: "테스트 주문. 항상 제외"
+    est_dlv_dt: "예상 배송일 (현지 날짜)"
+  cust:
+    cust_no: "주문마다 새로 생기는 번호. 사람 단위는 cust_uid"
+    cust_uid: "고객(사람) 고유 ID. 고객 수·재구매는 이것으로 센다"
+    uf: "주 코드 2자리. 권역은 st.rgn_cd"
+    deleted_at: "탈퇴 일시. 탈퇴 고객은 개인정보가 지워져 있다"
+    is_test_acct: "테스트 계정"
+  ord_item:
+    sale_amt: "품목 판매가(헤알). 배송비 제외. 매출 계산의 기준"
+    dlv_fee: "품목별 배송비(헤알)"
+    item_seq: "주문 안 품목 순번. 같은 상품을 여러 개 사면 여러 행"
+  ord_pay:
+    pay_amt: "결제 금액. 주문당 여러 건(바우처 분할)이고 품목 합과 다를 수 있다. 매출 계산에 쓰지 않는다"
+    inst_cnt: "할부 개월 수"
+  rfnd:
+    rfnd_amt: "환불 금액(헤알). 취소 주문은 결제액 전액"
+    rsn_cd: "CNCL 취소, DMG 파손, WRONG 오배송, LATE 지연"
+    rfnd_dtm: "UTC로 저장"
+  rvw:
+    rvw_id: "중복 있음. 행 키는 rvw_sn"
+    ans_dtm: "UTC로 저장"
+  prd:
+    ctgr_cd: "결측 있음, ctgr에 없는 코드도 있음 → LEFT JOIN"
+  geo_zip:
+    zip_pfx: "앞자리마다 여러 행. 조인 전에 한 행으로"
+  mon_sls_smry_old:
+    sls_amt_k: "천 헤알 단위. 배송비 포함, 취소만 제외(주문 불가는 포함), 현지 월 기준"
+    yyyymm: "2016-09 ~ 2017-12만 있음"
+  v_cust_contact:
+    tel_mask: "가운데 자리가 가려진 전화번호. 원문은 볼 수 없다"

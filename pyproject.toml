@@ -12,6 +12,7 @@ dependencies = [
     "pandas>=2.2",
     "psycopg[binary]>=3.2",
     "sqlglot>=30,<31",
+    "pyyaml>=6",
     "tzdata>=2024.1",
 ]
 
@@ -20,3 +21,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "inhouse.data" = ["schema.sql", "security.sql"]
+"inhouse.agent" = ["metrics.yaml"]
