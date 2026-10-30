@@ -9,7 +9,7 @@
 # 함정 번호: T1 테스트 주문, T2 UTC/현지 날짜, T3 cust_no vs cust_uid, T4 상태 코드, T5 환불,
 # T6 구 요약표(천 헤알), T7 결제 ≠ 품목, T8 카테고리 결측·미번역, T9 리뷰 중복, T10 좌표 중복,
 # T11 탈퇴 고객, T12 약어 열, T13 SELECT * 거절, T14 권역 범위
-# gold_by: hoyeol = 호열 작성, claude-draft = Claude 초안(호열 검토 필요)
+# gold_by: hoyeol = 호열 작성, together = 같이 작성, claude-draft = Claude 초안(호열 검토 필요)
 
 questions:
 
@@ -460,7 +460,13 @@ questions:
     question: 2017년 블랙프라이데이(11월 24일) 하루 주문 수는?
     checks: [T2, T1]
     expect: result
-    gold_sql: null
+    gold_by: together
+    gold_sql: |
+      -- 1단계 ord_dtm::date = 1,068 (UTC 날짜, 틀림) → 2단계 현지 날짜 1,176 → 3단계 테스트 제외 1,176 → 4단계 '주문 수' 정의(취소·불가 제외) 1,166
+      SELECT count(*) FROM ord
+      WHERE (ord_dtm AT TIME ZONE 'America/Sao_Paulo')::date = '2017-11-24'
+        AND NOT is_test
+        AND stat_cd NOT IN (90, 91)
   - id: D02
     category: trap
     db_user: u_e001
