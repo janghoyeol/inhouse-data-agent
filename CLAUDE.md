@@ -25,7 +25,10 @@
 - [~] 5. 정답셋·평가
   - [x] 에이전트 루프(`agent.py`, Haiku 5.5 기본, 직접 루프로 도구 호출 기록, 시스템 프롬프트 캐시), 질문 50개(`eval/questions.yaml`, 5분류×10, 거절 3), 채점(`eval/match.py`: 값 기준·인용 여부 구분), `inhouse.eval.run`, `inhouse.eval.check_gold`
   - [x] 라이브 4문항(Haiku 5.5, 합계 $0.0042): 매출(본사·남동부) 지표 SQL과 같은 값·인용, 블프는 합의된 '주문 수' 정의로 1,166(취소 포함 1,176은 정의 밖), 전화번호 요청 거절
-  - [ ] 정답 SQL 47개 — 호열 작성 (`eval/README.md`), Claude가 check_gold로 검산
-  - [ ] Haiku/Sonnet 첫 측정 (Haiku 50문항 약 $0.05, Sonnet 약 $1 예상)
+  - B안 합의(2026-10-30): A·B·C 30개는 Claude 초안(`gold_by: claude-draft`, 호열 검토), D·E 17개는 호열 작성 (채점 독립성은 함정·권한에서 지킴)
+  - [x] 초안 30개 작성·실행 확인. A01·A04 질문을 답이 하나가 되게 고침. 임시 측정 Haiku 32/33, 문항당 $0.0015 (`eval/RESULTS.md`)
+  - [x] 채점 버그 2개 수정(순위는 앞 N행, 월 vs 1일). B05는 실행마다 흔들림 → 정식 측정은 문항당 3회
+  - [ ] 호열: 초안 30개 검토 + D·E 17개 작성 → Claude가 check_gold로 검산
+  - [ ] 정식 측정: Haiku/Sonnet, 문항당 3회 (Haiku 약 $0.25, Sonnet 약 $5 예상)
 - [ ] 6. 웹 화면(사용자 전환) → CI → showcase 카드
 - [ ] 2단계(별도 ADR): 사내 문서 RAG + 쓰기 작업 승인 흐름

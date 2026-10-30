@@ -33,10 +33,16 @@ class TestMatch(unittest.TestCase):
         self.assertTrue(matches(gold, [["a", 3], ["b", 2]], order_matters=True))
         self.assertFalse(matches(gold, [["b", 2], ["a", 3]], order_matters=True))
         self.assertTrue(matches(gold, [["b", 2], ["a", 3]]))
+        # 순위 질문: 상위 10개를 뽑고 3개를 답해도 앞부분이 같으면 맞음, 앞에 다른 행이 끼면 틀림
+        self.assertTrue(matches(gold, [["a", 3], ["b", 2], ["c", 1]], order_matters=True))
+        self.assertFalse(matches(gold, [["a", 3], ["x", 2.5], ["b", 2]], order_matters=True))
+        self.assertFalse(matches(gold, [["a", 3], ["b", 2], ["c", 1]]))  # 순서 무관 표는 행 수가 같아야 함
 
     def test_dates_and_nulls(self):
         self.assertTrue(same("2017-11-24", "2017-11-24T00:00:00", 0.0005))
         self.assertTrue(same(None, None, 0.0005))
+        self.assertTrue(same("2017-01", "2017-01-01", 0.0005))
+        self.assertFalse(same("2017-01", "2017-02-01", 0.0005))
         self.assertFalse(same(None, 0, 0.0005))
 
     def test_refusal_text(self):

@@ -2,7 +2,7 @@
 
 - 정답이 값 하나(1×1)면: 에이전트 결과의 어느 칸이든 그 값과 같으면 맞음 (열 이름·행 모양 무관)
 - 정답이 표면: 행 수가 같고, 정답의 열마다 값 묶음이 같은 열이 에이전트 결과에 있으면 맞음 (열 이름·열 순서·추가 열 무관)
-  order_matters면 행 순서도 같아야 함
+  order_matters면 행 순서도 같아야 하고, 순위 질문이므로 에이전트 결과가 더 길면 앞의 행만 본다 (상위 10개를 뽑고 3개를 답한 경우)
 - 숫자는 상대 오차 tol 안이면 같다고 본다 (반올림 차이). rate면 0.0283과 2.83(%)을 같은 값으로 본다
 """
 from __future__ import annotations
@@ -11,6 +11,7 @@ import re
 from typing import Any
 
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+MONTH = re.compile(r"\d{4}-\d{2}$")
 
 
 def _num(v: Any) -> float | None:
@@ -36,6 +37,9 @@ def same(a: Any, b: Any, tol: float, rate: bool = False) -> bool:
     sa, sb = str(a).strip().lower(), str(b).strip().lower()
     if DATE.match(sa) and DATE.match(sb) and min(len(sa), len(sb)) == 10:  # 날짜 vs 날짜+자정 시각
         return sa[:10] == sb[:10]
+    for m, d in ((sa, sb), (sb, sa)):  # 월 "2017-01" vs 그 달 1일 "2017-01-01"
+        if MONTH.match(m) and DATE.match(d) and d.startswith(m + "-01"):
+            return True
     return sa == sb
 
 
@@ -58,6 +62,8 @@ def matches(gold_rows: list[list[Any]], cand_rows: list[list[Any]], tol: float =
     if len(gold_rows) == 1 and len(gold_rows[0]) == 1:
         target = gold_rows[0][0]
         return any(same(target, v, tol, rate) for row in cand_rows for v in row)
+    if order_matters and len(cand_rows) > len(gold_rows):
+        cand_rows = cand_rows[: len(gold_rows)]
     if len(gold_rows) != len(cand_rows):
         return False
     if not gold_rows:
