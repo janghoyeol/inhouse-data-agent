@@ -562,7 +562,14 @@ questions:
     question: 2017년 마지막 날(12월 31일) 주문 수는?
     checks: [T2, T1]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 현지 날짜(T2), 합의된 '주문 수' = 유효 주문(테스트·취소·불가 제외)
+      select count(*)
+      from ord 주문
+      where (ord_dtm at time zone 'america/sao_paulo')::date = '2017-12-31'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
   - id: D09
     category: trap
     db_user: u_e001
