@@ -35,7 +35,7 @@ FDE가 고객 DB를 처음 받고 첫 주에 쓰는 노트. **함정**은 정답
 | 8 | 카테고리 결측 610개, 번역 표에 없는 카테고리 2종(`pc_gamer`, `portateis_cozinha_e_preparadores_de_alimentos`) | `JOIN ctgr`로 상품이 사라짐 | 13개 상품이 inner join에서 빠짐, 610개는 카테고리 없음 | **Olist** |
 | 9 | 리뷰 ID 중복, 주문 하나에 리뷰 여러 개 | 리뷰 수·평균 점수 왜곡 | 중복 `rvw_id` 814 | **Olist** |
 | 10 | 우편번호 앞자리당 좌표 여러 행 | `JOIN geo_zip`으로 행이 불어남 | 100만 행 / 앞자리 약 1.9만 | **Olist** |
-| 11 | 탈퇴 고객은 개인정보 NULL, `deleted_at` | 고객 목록·연락처 조회에서 NULL | 1,980명 | 합성 |
+| 11 | 탈퇴 고객은 개인정보 NULL, `deleted_at` | 고객 목록·연락처 조회에서 NULL | 1,980행 (고객번호 기준 — 사람 수는 cust_uid로 따로 센다, T3) | 합성 |
 | 12 | 컬럼명 약어 (`sale_amt`, `dlv_fee`, `inst_cnt`, `uf`) | 의미 추측 | — | 합성 (이름 변경) |
 
 ## 권한 (2단계, ADR 0002)
