@@ -473,7 +473,14 @@ questions:
     question: 지금까지 구매한 고객은 모두 몇 명이야?
     checks: [T3, customer_count]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 사람은 cust_uid로(T3), 구매 = 유효 주문(취소 90·불가 91 제외). 전부 취소한 1,106명은 빠짐
+      -- 테스트는 고객 쪽(is_test_acct)으로 뺐다. 테스트 주문은 테스트 계정만 하므로 ord.is_test와 결과가 같다
+      select count(distinct c.cust_uid) from ord o
+      join cust c on o.cust_no = c.cust_no
+      where not is_test_acct
+      and stat_cd not in (90, 91)
   - id: D03
     category: trap
     db_user: u_e001
