@@ -619,7 +619,26 @@ questions:
     question: 2017년 매출은 얼마야?
     checks: [T14, net_sales]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 순매출 = 유효 주문 판매가 합 − 그 주문들의 환불 합. 남동부 매니저 권한으로 실행되므로 권역 조건 없이 자기 권역만(T14)
+      -- 판매가 3,928,252.84 − 환불 45,179.73 = 3,883,073.11 (같은 SQL을 본사 계정으로 돌리면 전국 6,031,684.57)
+      select
+      (select sum(품목.sale_amt)
+       from ord as 주문
+         join ord_item as 품목 on 주문.ord_no = 품목.ord_no
+       where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+         and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+         and 주문.is_test = false
+         and 주문.stat_cd not in (90, 91))
+      -
+      (select sum(환불.rfnd_amt)
+       from ord as 주문
+         join rfnd as 환불 on 주문.ord_no = 환불.ord_no
+       where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+         and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+         and 주문.is_test = false
+         and 주문.stat_cd not in (90, 91))
   - id: E02
     category: permission
     db_user: u_e105
