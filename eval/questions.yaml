@@ -543,7 +543,19 @@ questions:
     question: 2017년에 pc_gamer 카테고리 상품은 몇 개 팔렸어? (유효 주문 품목 수)
     checks: [T8]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 상품 → 품목(팔린 1개 = 1행) → 주문(날짜·유효 여부). pc_gamer는 번역 표에 없어 코드로 찾는다(T8, 영문 이름으로 찾으면 0)
+      -- 전체 기간 9개 중 2017년 유효 주문 4개
+      select count(*)
+      from prd as 상품
+        join ord_item as 품목 on 상품.prd_id = 품목.prd_id
+        join ord as 주문 on 품목.ord_no = 주문.ord_no
+      where 상품.ctgr_cd = 'pc_gamer'
+        and (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
   - id: D08
     category: trap
     db_user: u_e001
