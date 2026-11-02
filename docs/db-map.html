@@ -1,0 +1,326 @@
+<title>Tucanova DB 지도</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 위에 검색창(고정), 아래로 분류별 표 카드 2열 → 좁으면 1열. 함정·지표는 맨 아래 참고 목록 */
+:root {
+  --bg: #f4f6f3; --panel: #ffffff; --ink: #1d2420; --muted: #5d6a63; --line: #dde3de;
+  --accent: #0f6b5c; --accent-soft: #e0efe9; --warn: #a3471a; --warn-soft: #fbeee5; --lock: #6b4fa0;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --panel: #1a211e; --ink: #e4ebe7; --muted: #9aa8a1; --line: #2c3632;
+  --accent: #5cc2ad; --accent-soft: #1d3530; --warn: #f0a27a; --warn-soft: #3a2519; --lock: #b9a2e6; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121715; --panel: #1a211e; --ink: #e4ebe7; --muted: #9aa8a1; --line: #2c3632;
+  --accent: #5cc2ad; --accent-soft: #1d3530; --warn: #f0a27a; --warn-soft: #3a2519; --lock: #b9a2e6; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+code { font-family: var(--mono); font-size: .92em; }
+h1 { font-size: 1.6rem; margin: 28px 0 4px; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 4px; max-width: 70ch; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 12px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.bar input { flex: 1 1 260px; min-width: 0; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.bar input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bar .count { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips button { font: inherit; font-size: .85rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+.chips button:hover, .chips button:focus-visible { border-color: var(--accent); color: var(--accent); }
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+.how div { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+.how b { display: block; margin-bottom: 2px; }
+.how p { margin: 0; font-size: .92rem; }
+.group { margin-top: 32px; }
+.ghead { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 14px; }
+.ghead h2 { margin: 0; font-size: 1.2rem; }
+.ghead p { margin: 0; color: var(--muted); font-size: .92rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); gap: 16px; }
+.tcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; min-width: 0; scroll-margin-top: 80px; }
+.tcard:target { outline: 2px solid var(--accent); }
+.tcard header { padding: 14px 16px 6px; }
+.tcard h3 { margin: 0; font-size: 1.1rem; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.tcard h3 code { color: var(--accent); font-size: 1.05rem; }
+.ko { font-weight: 500; }
+.meta { margin: 4px 0 0; display: flex; gap: 10px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta span + span::before { content: "·"; margin-right: 10px; }
+.desc { margin: 6px 0 0; font-size: .92rem; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: .78rem; letter-spacing: .04em; padding: 8px 16px; border-top: 1px solid var(--line); }
+td { padding: 7px 16px; border-top: 1px solid var(--line); vertical-align: top; }
+td.col { white-space: nowrap; }
+td.type { white-space: nowrap; color: var(--muted); font-size: .82rem; }
+.note { margin-top: 4px; font-size: .84rem; color: var(--warn); background: var(--warn-soft); padding: 4px 8px; border-radius: 6px; }
+.badge { display: inline-block; font-size: .72rem; padding: 0 6px; border-radius: 4px; margin-left: 4px; border: 1px solid currentColor; text-decoration: none; vertical-align: 1px; }
+.badge.key { color: var(--muted); }
+.badge.link { color: var(--accent); }
+.badge.lock { color: var(--lock); }
+mark { background: var(--accent-soft); color: inherit; }
+.ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 24px; margin-top: 40px; }
+.ref h2 { font-size: 1.2rem; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin: 0 0 10px; }
+.ref ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ref li { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.ref li p { margin: 2px 0 0; font-size: .9rem; color: var(--muted); }
+.ref li b { color: var(--warn); margin-right: 4px; font-variant-numeric: tabular-nums; }
+.ref .mets li b { color: var(--accent); }
+.diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; margin-top: 40px; }
+.diagram h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.empty { color: var(--muted); margin-top: 24px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <h1>Tucanova DB 지도</h1>
+  <p class="lead">정답 SQL을 쓸 때 옆에 띄워 두는 표·열 사전. 표 이름, 열 이름, 쉬운 뜻, 주의사항(⚠)을 한 화면에 모았다.
+  데이터 기간은 2016-09 ~ 2018-10, 금액 단위는 헤알(BRL).</p>
+
+  <div class="bar">
+    <label for="q" class="count" style="flex-basis:100%">질문 속 단어로 찾기 (예: 고객, 매출, 취소, 날짜)</label>
+    <input id="q" type="search" placeholder="고객, 판매가, 탈퇴, uf …" autocomplete="off">
+    <div class="chips" aria-label="자주 찾는 단어">
+      <button type="button" data-w="고객">고객</button><button type="button" data-w="판매가">판매가</button>
+      <button type="button" data-w="취소">취소</button><button type="button" data-w="시각">시각</button>
+      <button type="button" data-w="탈퇴">탈퇴</button><button type="button" data-w="카테고리">카테고리</button>
+      <button type="button" data-w="리뷰">리뷰</button><button type="button" data-w="">모두 보기</button>
+    </div>
+    <span class="count" id="count" aria-live="polite"></span>
+  </div>
+
+  <div class="how">
+    <div><b>1. 질문을 단어로 쪼갠다</b><p>"구매한 <u>고객</u> 수" → 고객이 어느 표·열에 있는지 위에서 찾는다.</p></div>
+    <div><b>2. ⚠ 주의사항을 읽는다</b><p>열마다 붙은 ⚠ 줄과 아래 함정 목록(T1~T14)이 흔한 실수를 막아 준다.</p></div>
+    <div><b>3. 지표 단어는 정의를 따른다</b><p>매출·주문 수·고객 수 같은 단어는 맨 아래 지표 정의대로 센다.</p></div>
+  </div>
+
+  
+    <section class="group" data-group>
+      <div class="ghead"><h2>주문</h2><p>주문 한 건과 거기 딸린 것들. 질문 대부분이 여기서 시작한다.</p></div>
+      <div class="grid">
+      <article class="tcard" id="t-ord" data-table="ord">
+        <header>
+          <h3><code>ord</code> <span class="ko">주문</span></h3>
+          <p class="meta"><span>99,741행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">주문 1건 = 1행. 언제, 누가(고객번호), 어떤 상태인지.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="ord 주문 ord_no 주문번호 "><td class="col"><code>ord_no</code></td><td class="mean">주문번호 <span class="badge key">키</span></td><td class="type">글자</td></tr><tr data-q="ord 주문 cust_no 고객번호 (cust 표와 연결) "><td class="col"><code>cust_no</code></td><td class="mean">고객번호 (cust 표와 연결) <a class="badge link" href="#t-cust">→ cust</a></td><td class="type">글자</td></tr><tr data-q="ord 주문 stat_cd 주문 상태 숫자 cd_ord_stat 참조. 10 생성, 20 승인, 30 송장, 40 출고 준비, 50 배송 중, 60 배송 완료, 90 취소, 91 주문 불가"><td class="col"><code>stat_cd</code></td><td class="mean">주문 상태 숫자 <a class="badge link" href="#t-cd_ord_stat">→ cd_ord_stat</a><div class="note">⚠ cd_ord_stat 참조. 10 생성, 20 승인, 30 송장, 40 출고 준비, 50 배송 중, 60 배송 완료, 90 취소, 91 주문 불가</div></td><td class="type">정수</td></tr><tr data-q="ord 주문 ord_dtm 주문한 순간 timestamptz(한 순간). ::date는 접속 시간대에 따라 바뀌니 현지 날짜는 (ord_dtm at time zone &#x27;america/sao_paulo&#x27;)::date"><td class="col"><code>ord_dtm</code></td><td class="mean">주문한 순간 <div class="note">⚠ timestamptz(한 순간). ::date는 접속 시간대에 따라 바뀌니 현지 날짜는 (ord_dtm AT TIME ZONE &#x27;America/Sao_Paulo&#x27;)::date</div></td><td class="type">시각</td></tr><tr data-q="ord 주문 aprv_dtm 결제 승인된 순간 시각(한 순간). 날짜는 at time zone &#x27;america/sao_paulo&#x27;로 자른다"><td class="col"><code>aprv_dtm</code></td><td class="mean">결제 승인된 순간 <div class="note">⚠ 시각(한 순간). 날짜는 AT TIME ZONE &#x27;America/Sao_Paulo&#x27;로 자른다</div></td><td class="type">시각</td></tr><tr data-q="ord 주문 dlv_crr_dtm 택배사에 넘긴 순간 "><td class="col"><code>dlv_crr_dtm</code></td><td class="mean">택배사에 넘긴 순간 </td><td class="type">시각</td></tr><tr data-q="ord 주문 dlv_cust_dtm 고객에게 도착한 순간 시각(한 순간). 날짜는 at time zone &#x27;america/sao_paulo&#x27;로 자른다. 배송 완료가 아니면 null"><td class="col"><code>dlv_cust_dtm</code></td><td class="mean">고객에게 도착한 순간 <div class="note">⚠ 시각(한 순간). 날짜는 AT TIME ZONE &#x27;America/Sao_Paulo&#x27;로 자른다. 배송 완료가 아니면 NULL</div></td><td class="type">시각</td></tr><tr data-q="ord 주문 est_dlv_dt 예상 도착일 예상 배송일 (현지 날짜)"><td class="col"><code>est_dlv_dt</code></td><td class="mean">예상 도착일 <div class="note">⚠ 예상 배송일 (현지 날짜)</div></td><td class="type">날짜</td></tr><tr data-q="ord 주문 is_test 테스트 주문인지 테스트 주문. 항상 제외"><td class="col"><code>is_test</code></td><td class="mean">테스트 주문인지 <div class="note">⚠ 테스트 주문. 항상 제외</div></td><td class="type">참/거짓</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-ord_item" data-table="ord_item">
+        <header>
+          <h3><code>ord_item</code> <span class="ko">주문 품목</span></h3>
+          <p class="meta"><span>113,069행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">주문 안의 상품 1개 = 1행. 판매가·배송비가 여기 있다. 매출은 이 표로 센다.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="ord_item 주문 품목 ord_no 주문번호 "><td class="col"><code>ord_no</code></td><td class="mean">주문번호 <span class="badge key">키</span><a class="badge link" href="#t-ord">→ ord</a></td><td class="type">글자</td></tr><tr data-q="ord_item 주문 품목 item_seq 주문 안 품목 순번 (1, 2, 3…) 주문 안 품목 순번. 같은 상품을 여러 개 사면 여러 행"><td class="col"><code>item_seq</code></td><td class="mean">주문 안 품목 순번 (1, 2, 3…) <span class="badge key">키</span><div class="note">⚠ 주문 안 품목 순번. 같은 상품을 여러 개 사면 여러 행</div></td><td class="type">정수</td></tr><tr data-q="ord_item 주문 품목 prd_id 상품 id "><td class="col"><code>prd_id</code></td><td class="mean">상품 ID <a class="badge link" href="#t-prd">→ prd</a></td><td class="type">글자</td></tr><tr data-q="ord_item 주문 품목 slr_id 판매자 id "><td class="col"><code>slr_id</code></td><td class="mean">판매자 ID <a class="badge link" href="#t-slr">→ slr</a></td><td class="type">글자</td></tr><tr data-q="ord_item 주문 품목 ship_lmt_dtm 출고 기한 "><td class="col"><code>ship_lmt_dtm</code></td><td class="mean">출고 기한 </td><td class="type">시각</td></tr><tr data-q="ord_item 주문 품목 sale_amt 판매가 (헤알) 품목 판매가(헤알). 배송비 제외. 매출 계산의 기준"><td class="col"><code>sale_amt</code></td><td class="mean">판매가 (헤알) <div class="note">⚠ 품목 판매가(헤알). 배송비 제외. 매출 계산의 기준</div></td><td class="type">금액·소수</td></tr><tr data-q="ord_item 주문 품목 dlv_fee 배송비 (헤알) 품목별 배송비(헤알)"><td class="col"><code>dlv_fee</code></td><td class="mean">배송비 (헤알) <div class="note">⚠ 품목별 배송비(헤알)</div></td><td class="type">금액·소수</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-ord_pay" data-table="ord_pay">
+        <header>
+          <h3><code>ord_pay</code> <span class="ko">결제</span></h3>
+          <p class="meta"><span>104,186행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">결제 1건 = 1행. 한 주문에 여러 건일 수 있다(바우처 분할).</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="ord_pay 결제 ord_no 주문번호 "><td class="col"><code>ord_no</code></td><td class="mean">주문번호 <span class="badge key">키</span><a class="badge link" href="#t-ord">→ ord</a></td><td class="type">글자</td></tr><tr data-q="ord_pay 결제 pay_seq 결제 순번 "><td class="col"><code>pay_seq</code></td><td class="mean">결제 순번 <span class="badge key">키</span></td><td class="type">정수</td></tr><tr data-q="ord_pay 결제 pay_mthd 결제 수단 "><td class="col"><code>pay_mthd</code></td><td class="mean">결제 수단 </td><td class="type">글자</td></tr><tr data-q="ord_pay 결제 inst_cnt 할부 개월 수 할부 개월 수"><td class="col"><code>inst_cnt</code></td><td class="mean">할부 개월 수 <div class="note">⚠ 할부 개월 수</div></td><td class="type">정수</td></tr><tr data-q="ord_pay 결제 pay_amt 결제 금액 (헤알) 결제 금액. 주문당 여러 건(바우처 분할)이고 품목 합과 다를 수 있다. 매출 계산에 쓰지 않는다"><td class="col"><code>pay_amt</code></td><td class="mean">결제 금액 (헤알) <div class="note">⚠ 결제 금액. 주문당 여러 건(바우처 분할)이고 품목 합과 다를 수 있다. 매출 계산에 쓰지 않는다</div></td><td class="type">금액·소수</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-rfnd" data-table="rfnd">
+        <header>
+          <h3><code>rfnd</code> <span class="ko">환불</span></h3>
+          <p class="meta"><span>3,519행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">환불 1건 = 1행. 취소 주문은 전액 환불.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="rfnd 환불 rfnd_no 환불번호 "><td class="col"><code>rfnd_no</code></td><td class="mean">환불번호 <span class="badge key">키</span></td><td class="type">정수</td></tr><tr data-q="rfnd 환불 ord_no 주문번호 "><td class="col"><code>ord_no</code></td><td class="mean">주문번호 <a class="badge link" href="#t-ord">→ ord</a></td><td class="type">글자</td></tr><tr data-q="rfnd 환불 rfnd_amt 환불 금액 (헤알) 환불 금액(헤알). 취소 주문은 결제액 전액"><td class="col"><code>rfnd_amt</code></td><td class="mean">환불 금액 (헤알) <div class="note">⚠ 환불 금액(헤알). 취소 주문은 결제액 전액</div></td><td class="type">금액·소수</td></tr><tr data-q="rfnd 환불 rfnd_dtm 환불한 순간 시각(한 순간). 날짜는 at time zone &#x27;america/sao_paulo&#x27;로 자른다"><td class="col"><code>rfnd_dtm</code></td><td class="mean">환불한 순간 <div class="note">⚠ 시각(한 순간). 날짜는 AT TIME ZONE &#x27;America/Sao_Paulo&#x27;로 자른다</div></td><td class="type">시각</td></tr><tr data-q="rfnd 환불 rsn_cd 환불 사유 코드 cncl 취소, dmg 파손, wrong 오배송, late 지연"><td class="col"><code>rsn_cd</code></td><td class="mean">환불 사유 코드 <div class="note">⚠ CNCL 취소, DMG 파손, WRONG 오배송, LATE 지연</div></td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-rvw" data-table="rvw">
+        <header>
+          <h3><code>rvw</code> <span class="ko">리뷰</span></h3>
+          <p class="meta"><span>99,224행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">리뷰 1건 = 1행. 주문 하나에 여러 건일 수 있다.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="rvw 리뷰 rvw_sn 리뷰 행 번호 (진짜 키) "><td class="col"><code>rvw_sn</code></td><td class="mean">리뷰 행 번호 (진짜 키) <span class="badge key">키</span></td><td class="type">정수</td></tr><tr data-q="rvw 리뷰 rvw_id 리뷰 id (중복 있음) 중복 있음. 행 키는 rvw_sn"><td class="col"><code>rvw_id</code></td><td class="mean">리뷰 ID (중복 있음) <div class="note">⚠ 중복 있음. 행 키는 rvw_sn</div></td><td class="type">글자</td></tr><tr data-q="rvw 리뷰 ord_no 주문번호 "><td class="col"><code>ord_no</code></td><td class="mean">주문번호 <a class="badge link" href="#t-ord">→ ord</a></td><td class="type">글자</td></tr><tr data-q="rvw 리뷰 score 점수 1~5 "><td class="col"><code>score</code></td><td class="mean">점수 1~5 </td><td class="type">정수</td></tr><tr data-q="rvw 리뷰 title 리뷰 제목 "><td class="col"><code>title</code></td><td class="mean">리뷰 제목 </td><td class="type">글자</td></tr><tr data-q="rvw 리뷰 msg 리뷰 내용 "><td class="col"><code>msg</code></td><td class="mean">리뷰 내용 </td><td class="type">글자</td></tr><tr data-q="rvw 리뷰 crt_dt 리뷰 작성일 "><td class="col"><code>crt_dt</code></td><td class="mean">리뷰 작성일 </td><td class="type">날짜</td></tr><tr data-q="rvw 리뷰 ans_dtm 리뷰 답변 순간 시각(한 순간). 날짜는 at time zone &#x27;america/sao_paulo&#x27;로 자른다"><td class="col"><code>ans_dtm</code></td><td class="mean">리뷰 답변 순간 <div class="note">⚠ 시각(한 순간). 날짜는 AT TIME ZONE &#x27;America/Sao_Paulo&#x27;로 자른다</div></td><td class="type">시각</td></tr></tbody>
+        </table></div>
+      </article></div>
+    </section>
+    <section class="group" data-group>
+      <div class="ghead"><h2>사람·상품</h2><p>누가 샀고, 누가 팔았고, 무엇을 팔았나.</p></div>
+      <div class="grid">
+      <article class="tcard" id="t-cust" data-table="cust">
+        <header>
+          <h3><code>cust</code> <span class="ko">고객</span></h3>
+          <p class="meta"><span>99,471행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">주문할 때마다 1행이 생긴다(고객번호가 주문마다 다름). 같은 사람은 cust_uid가 같다.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="cust 고객 cust_no 고객번호 (주문마다 새로) 주문마다 새로 생기는 번호. 사람 단위는 cust_uid"><td class="col"><code>cust_no</code></td><td class="mean">고객번호 (주문마다 새로) <span class="badge key">키</span><div class="note">⚠ 주문마다 새로 생기는 번호. 사람 단위는 cust_uid</div></td><td class="type">글자</td></tr><tr data-q="cust 고객 cust_uid 사람 id (같은 사람이면 같음) 고객(사람) 고유 id. 고객 수·재구매는 이것으로 센다"><td class="col"><code>cust_uid</code></td><td class="mean">사람 ID (같은 사람이면 같음) <div class="note">⚠ 고객(사람) 고유 ID. 고객 수·재구매는 이것으로 센다</div></td><td class="type">글자</td></tr><tr data-q="cust 고객 zip_pfx 우편번호 앞 5자리 "><td class="col"><code>zip_pfx</code></td><td class="mean">우편번호 앞 5자리 </td><td class="type">글자 5자리</td></tr><tr data-q="cust 고객 city_nm 도시 "><td class="col"><code>city_nm</code></td><td class="mean">도시 </td><td class="type">글자</td></tr><tr data-q="cust 고객 uf 주 코드 2자리 (sp, rj…) 주 코드 2자리. 권역은 st.rgn_cd"><td class="col"><code>uf</code></td><td class="mean">주 코드 2자리 (SP, RJ…) <a class="badge link" href="#t-st">→ st</a><div class="note">⚠ 주 코드 2자리. 권역은 st.rgn_cd</div></td><td class="type">글자 2자리</td></tr><tr data-q="cust 고객 cust_nm 이름 (개인정보) "><td class="col"><code>cust_nm</code></td><td class="mean">이름 (개인정보) <span class="badge lock">권한 없음</span></td><td class="type">글자</td></tr><tr data-q="cust 고객 tel_no 전화번호 (개인정보) "><td class="col"><code>tel_no</code></td><td class="mean">전화번호 (개인정보) <span class="badge lock">권한 없음</span></td><td class="type">글자</td></tr><tr data-q="cust 고객 email 이메일 (개인정보) "><td class="col"><code>email</code></td><td class="mean">이메일 (개인정보) <span class="badge lock">권한 없음</span></td><td class="type">글자</td></tr><tr data-q="cust 고객 join_dt 가입일 "><td class="col"><code>join_dt</code></td><td class="mean">가입일 </td><td class="type">날짜</td></tr><tr data-q="cust 고객 deleted_at 탈퇴한 순간 (탈퇴 안 했으면 비어 있음) 탈퇴 일시. 탈퇴 고객은 개인정보가 지워져 있다"><td class="col"><code>deleted_at</code></td><td class="mean">탈퇴한 순간 (탈퇴 안 했으면 비어 있음) <div class="note">⚠ 탈퇴 일시. 탈퇴 고객은 개인정보가 지워져 있다</div></td><td class="type">시각</td></tr><tr data-q="cust 고객 is_test_acct 테스트 계정인지 테스트 계정"><td class="col"><code>is_test_acct</code></td><td class="mean">테스트 계정인지 <div class="note">⚠ 테스트 계정</div></td><td class="type">참/거짓</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-slr" data-table="slr">
+        <header>
+          <h3><code>slr</code> <span class="ko">판매자</span></h3>
+          <p class="meta"><span>3,095행</span><span>모두 전체</span></p>
+          <p class="desc">판매자 1곳 = 1행.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="slr 판매자 slr_id 판매자 id "><td class="col"><code>slr_id</code></td><td class="mean">판매자 ID <span class="badge key">키</span></td><td class="type">글자</td></tr><tr data-q="slr 판매자 zip_pfx 우편번호 앞 5자리 "><td class="col"><code>zip_pfx</code></td><td class="mean">우편번호 앞 5자리 </td><td class="type">글자 5자리</td></tr><tr data-q="slr 판매자 city_nm 도시 "><td class="col"><code>city_nm</code></td><td class="mean">도시 </td><td class="type">글자</td></tr><tr data-q="slr 판매자 uf 주 코드 2자리 "><td class="col"><code>uf</code></td><td class="mean">주 코드 2자리 </td><td class="type">글자 2자리</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-prd" data-table="prd">
+        <header>
+          <h3><code>prd</code> <span class="ko">상품</span></h3>
+          <p class="meta"><span>32,951행</span><span>모두 전체</span></p>
+          <p class="desc">상품 1개 = 1행. 카테고리 코드는 포르투갈어.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="prd 상품 prd_id 상품 id "><td class="col"><code>prd_id</code></td><td class="mean">상품 ID <span class="badge key">키</span></td><td class="type">글자</td></tr><tr data-q="prd 상품 ctgr_cd 카테고리 코드 (포르투갈어) 결측 있음, ctgr에 없는 코드도 있음 → left join"><td class="col"><code>ctgr_cd</code></td><td class="mean">카테고리 코드 (포르투갈어) <div class="note">⚠ 결측 있음, ctgr에 없는 코드도 있음 → LEFT JOIN</div></td><td class="type">글자</td></tr><tr data-q="prd 상품 nm_len 상품명 글자 수 "><td class="col"><code>nm_len</code></td><td class="mean">상품명 글자 수 </td><td class="type">정수</td></tr><tr data-q="prd 상품 desc_len 설명 글자 수 "><td class="col"><code>desc_len</code></td><td class="mean">설명 글자 수 </td><td class="type">정수</td></tr><tr data-q="prd 상품 photo_qty 사진 수 "><td class="col"><code>photo_qty</code></td><td class="mean">사진 수 </td><td class="type">정수</td></tr><tr data-q="prd 상품 wt_g 무게 (g) "><td class="col"><code>wt_g</code></td><td class="mean">무게 (g) </td><td class="type">정수</td></tr><tr data-q="prd 상품 len_cm 길이 (cm) "><td class="col"><code>len_cm</code></td><td class="mean">길이 (cm) </td><td class="type">정수</td></tr><tr data-q="prd 상품 ht_cm 높이 (cm) "><td class="col"><code>ht_cm</code></td><td class="mean">높이 (cm) </td><td class="type">정수</td></tr><tr data-q="prd 상품 wd_cm 너비 (cm) "><td class="col"><code>wd_cm</code></td><td class="mean">너비 (cm) </td><td class="type">정수</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-ctgr" data-table="ctgr">
+        <header>
+          <h3><code>ctgr</code> <span class="ko">카테고리</span></h3>
+          <p class="meta"><span>71행</span><span>모두 전체</span></p>
+          <p class="desc">카테고리 코드(포르투갈어) → 영문 이름.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="ctgr 카테고리 ctgr_cd 카테고리 코드 (포르투갈어) "><td class="col"><code>ctgr_cd</code></td><td class="mean">카테고리 코드 (포르투갈어) <span class="badge key">키</span></td><td class="type">글자</td></tr><tr data-q="ctgr 카테고리 ctgr_nm_en 카테고리 영문 이름 "><td class="col"><code>ctgr_nm_en</code></td><td class="mean">카테고리 영문 이름 </td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article></div>
+    </section>
+    <section class="group" data-group>
+      <div class="ghead"><h2>코드·지역</h2><p>숫자·약어로 된 값의 뜻을 풀어 주는 표.</p></div>
+      <div class="grid">
+      <article class="tcard" id="t-cd_ord_stat" data-table="cd_ord_stat">
+        <header>
+          <h3><code>cd_ord_stat</code> <span class="ko">주문 상태 코드</span></h3>
+          <p class="meta"><span>8행</span><span>모두 전체</span></p>
+          <p class="desc">주문 상태 숫자의 뜻. 60 배송 완료, 90 취소 등.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="cd_ord_stat 주문 상태 코드 stat_cd 상태 숫자 "><td class="col"><code>stat_cd</code></td><td class="mean">상태 숫자 <span class="badge key">키</span></td><td class="type">정수</td></tr><tr data-q="cd_ord_stat 주문 상태 코드 stat_nm 상태 이름 (영어) "><td class="col"><code>stat_nm</code></td><td class="mean">상태 이름 (영어) </td><td class="type">글자</td></tr><tr data-q="cd_ord_stat 주문 상태 코드 stat_desc 상태 설명 (한국어) "><td class="col"><code>stat_desc</code></td><td class="mean">상태 설명 (한국어) </td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-st" data-table="st">
+        <header>
+          <h3><code>st</code> <span class="ko">주(州)</span></h3>
+          <p class="meta"><span>27행</span><span>모두 전체</span></p>
+          <p class="desc">브라질 주 27개 → 소속 권역.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="st 주(州) uf 주 코드 2자리 "><td class="col"><code>uf</code></td><td class="mean">주 코드 2자리 <span class="badge key">키</span></td><td class="type">글자 2자리</td></tr><tr data-q="st 주(州) rgn_cd 권역 코드 "><td class="col"><code>rgn_cd</code></td><td class="mean">권역 코드 <a class="badge link" href="#t-rgn">→ rgn</a></td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-rgn" data-table="rgn">
+        <header>
+          <h3><code>rgn</code> <span class="ko">권역</span></h3>
+          <p class="meta"><span>5행</span><span>모두 전체</span></p>
+          <p class="desc">브라질 5개 권역의 이름.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="rgn 권역 rgn_cd 권역 코드 (n, ne, co, se, s) "><td class="col"><code>rgn_cd</code></td><td class="mean">권역 코드 (N, NE, CO, SE, S) <span class="badge key">키</span></td><td class="type">글자</td></tr><tr data-q="rgn 권역 rgn_nm 권역 이름 (포르투갈어) "><td class="col"><code>rgn_nm</code></td><td class="mean">권역 이름 (포르투갈어) </td><td class="type">글자</td></tr><tr data-q="rgn 권역 rgn_nm_ko 권역 이름 (한국어) "><td class="col"><code>rgn_nm_ko</code></td><td class="mean">권역 이름 (한국어) </td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-geo_zip" data-table="geo_zip">
+        <header>
+          <h3><code>geo_zip</code> <span class="ko">우편번호 좌표</span></h3>
+          <p class="meta"><span>1,000,163행</span><span>모두 전체</span></p>
+          <p class="desc">우편번호 앞 5자리 → 위도·경도. 같은 앞자리에 여러 행.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="geo_zip 우편번호 좌표 zip_pfx 우편번호 앞 5자리 앞자리마다 여러 행. 조인 전에 한 행으로"><td class="col"><code>zip_pfx</code></td><td class="mean">우편번호 앞 5자리 <div class="note">⚠ 앞자리마다 여러 행. 조인 전에 한 행으로</div></td><td class="type">글자 5자리</td></tr><tr data-q="geo_zip 우편번호 좌표 lat 위도 "><td class="col"><code>lat</code></td><td class="mean">위도 </td><td class="type">소수</td></tr><tr data-q="geo_zip 우편번호 좌표 lng 경도 "><td class="col"><code>lng</code></td><td class="mean">경도 </td><td class="type">소수</td></tr><tr data-q="geo_zip 우편번호 좌표 city_nm 도시 "><td class="col"><code>city_nm</code></td><td class="mean">도시 </td><td class="type">글자</td></tr><tr data-q="geo_zip 우편번호 좌표 uf 주 코드 2자리 "><td class="col"><code>uf</code></td><td class="mean">주 코드 2자리 </td><td class="type">글자 2자리</td></tr></tbody>
+        </table></div>
+      </article></div>
+    </section>
+    <section class="group" data-group>
+      <div class="ghead"><h2>특수</h2><p>쓰기 전에 주의가 필요한 표와 뷰.</p></div>
+      <div class="grid">
+      <article class="tcard" id="t-mon_sls_smry_old" data-table="mon_sls_smry_old">
+        <header>
+          <h3><code>mon_sls_smry_old</code> <span class="ko">구 시스템 월 매출 요약</span></h3>
+          <p class="meta"><span>342행</span><span>권역 매니저는 자기 권역만</span></p>
+          <p class="desc">2017년까지만, 천 헤알 단위, 지금 매출 정의와 다름.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="mon_sls_smry_old 구 시스템 월 매출 요약 yyyymm 연월 (201711 형식) 2016-09 ~ 2017-12만 있음"><td class="col"><code>yyyymm</code></td><td class="mean">연월 (201711 형식) <span class="badge key">키</span><div class="note">⚠ 2016-09 ~ 2017-12만 있음</div></td><td class="type">글자 6자리</td></tr><tr data-q="mon_sls_smry_old 구 시스템 월 매출 요약 uf 주 코드 2자리 "><td class="col"><code>uf</code></td><td class="mean">주 코드 2자리 <span class="badge key">키</span></td><td class="type">글자 2자리</td></tr><tr data-q="mon_sls_smry_old 구 시스템 월 매출 요약 sls_amt_k 매출 (천 헤알) 천 헤알 단위. 배송비 포함, 취소만 제외(주문 불가는 포함), 현지 월 기준"><td class="col"><code>sls_amt_k</code></td><td class="mean">매출 (천 헤알) <div class="note">⚠ 천 헤알 단위. 배송비 포함, 취소만 제외(주문 불가는 포함), 현지 월 기준</div></td><td class="type">금액·소수</td></tr><tr data-q="mon_sls_smry_old 구 시스템 월 매출 요약 ord_cnt 주문 수 "><td class="col"><code>ord_cnt</code></td><td class="mean">주문 수 </td><td class="type">정수</td></tr></tbody>
+        </table></div>
+      </article>
+      <article class="tcard" id="t-v_cust_contact" data-table="v_cust_contact">
+        <header>
+          <h3><code>v_cust_contact</code> <span class="ko">고객 연락처(마스킹)</span></h3>
+          <p class="meta"><span>0행</span><span>CS 담당만</span></p>
+          <p class="desc">CS 담당만 볼 수 있다. 이름·전화·이메일이 가려져 있다.</p>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>열</th><th>뜻</th><th>종류</th></tr></thead>
+          <tbody><tr data-q="v_cust_contact 고객 연락처(마스킹) cust_no 고객번호 "><td class="col"><code>cust_no</code></td><td class="mean">고객번호 </td><td class="type">글자</td></tr><tr data-q="v_cust_contact 고객 연락처(마스킹) cust_uid 사람 id "><td class="col"><code>cust_uid</code></td><td class="mean">사람 ID </td><td class="type">글자</td></tr><tr data-q="v_cust_contact 고객 연락처(마스킹) uf 주 코드 "><td class="col"><code>uf</code></td><td class="mean">주 코드 </td><td class="type">글자 2자리</td></tr><tr data-q="v_cust_contact 고객 연락처(마스킹) cust_nm_mask 가려진 이름 (ana s.) "><td class="col"><code>cust_nm_mask</code></td><td class="mean">가려진 이름 (Ana S.) </td><td class="type">글자</td></tr><tr data-q="v_cust_contact 고객 연락처(마스킹) tel_mask 가려진 전화번호 가운데 자리가 가려진 전화번호. 원문은 볼 수 없다"><td class="col"><code>tel_mask</code></td><td class="mean">가려진 전화번호 <div class="note">⚠ 가운데 자리가 가려진 전화번호. 원문은 볼 수 없다</div></td><td class="type">글자</td></tr><tr data-q="v_cust_contact 고객 연락처(마스킹) email_mask 가려진 이메일 "><td class="col"><code>email_mask</code></td><td class="mean">가려진 이메일 </td><td class="type">글자</td></tr></tbody>
+        </table></div>
+      </article></div>
+    </section>
+  <p class="empty" id="empty" hidden>찾는 단어가 들어간 열이 없습니다. 다른 표현으로 찾아보세요 (예: 사람 → 고객).</p>
+
+  <div class="diagram">
+    <h2>표 연결 지도</h2>
+    <p class="lead">선은 JOIN 할 수 있는 길이다. 선 위의 이름이 두 표를 잇는 열.</p>
+    <pre class="mermaid">erDiagram
+    st ||--o{ cust : &quot;uf&quot;
+    cust ||--o{ ord : &quot;cust_no&quot;
+    cd_ord_stat ||--o{ ord : &quot;stat_cd&quot;
+    ord ||--o{ ord_item : &quot;ord_no&quot;
+    prd ||--o{ ord_item : &quot;prd_id&quot;
+    slr ||--o{ ord_item : &quot;slr_id&quot;
+    ord ||--o{ ord_pay : &quot;ord_no&quot;
+    ord ||--o{ rfnd : &quot;ord_no&quot;
+    ord ||--o{ rvw : &quot;ord_no&quot;
+    rgn ||--o{ st : &quot;rgn_cd&quot;</pre>
+  </div>
+
+  <div class="ref">
+    <section><h2>함정 T1~T14</h2><ul id="traps"><li data-q="t1테스트 주문ord.is_test가 true인 주문은 항상 뺀다. 9,999.99짜리 가짜 품목이 섞여 있다."><b>T1</b> <span class="tn">테스트 주문</span><p>ord.is_test가 true인 주문은 항상 뺀다. 9,999.99짜리 가짜 품목이 섞여 있다.</p></li><li data-q="t2날짜와 시간대ord_dtm 같은 시각 열을 ::date로 자르면 접속한 프로그램의 시간대로 잘린다 (dbeaver는 한국 시간). 날짜는 (ord_dtm at time zone &#x27;america/sao_paulo&#x27;)::date 로."><b>T2</b> <span class="tn">날짜와 시간대</span><p>ord_dtm 같은 시각 열을 ::date로 자르면 접속한 프로그램의 시간대로 잘린다 (DBeaver는 한국 시간). 날짜는 (ord_dtm AT TIME ZONE &#x27;America/Sao_Paulo&#x27;)::date 로.</p></li><li data-q="t3고객번호와 사람cust_no는 주문마다 새로 생긴다. 사람 수·재구매는 cust_uid로 센다."><b>T3</b> <span class="tn">고객번호와 사람</span><p>cust_no는 주문마다 새로 생긴다. 사람 수·재구매는 cust_uid로 센다.</p></li><li data-q="t4상태는 숫자stat_cd는 숫자. 뜻은 cd_ord_stat에 있다. 90 취소, 91 주문 불가."><b>T4</b> <span class="tn">상태는 숫자</span><p>stat_cd는 숫자. 뜻은 cd_ord_stat에 있다. 90 취소, 91 주문 불가.</p></li><li data-q="t5환불은 다른 표환불은 rfnd에 따로 있다. 취소 주문의 전액 환불을 매출에서 또 빼지 않는다."><b>T5</b> <span class="tn">환불은 다른 표</span><p>환불은 rfnd에 따로 있다. 취소 주문의 전액 환불을 매출에서 또 빼지 않는다.</p></li><li data-q="t6구 시스템 요약표mon_sls_smry_old는 천 헤알 단위이고 정의가 다르다 (배송비 포함, 취소만 제외)."><b>T6</b> <span class="tn">구 시스템 요약표</span><p>mon_sls_smry_old는 천 헤알 단위이고 정의가 다르다 (배송비 포함, 취소만 제외).</p></li><li data-q="t7결제 ≠ 매출결제 합과 품목 합은 다르다 (바우처·할부). 매출은 ord_item.sale_amt로."><b>T7</b> <span class="tn">결제 ≠ 매출</span><p>결제 합과 품목 합은 다르다 (바우처·할부). 매출은 ord_item.sale_amt로.</p></li><li data-q="t8카테고리 빈칸카테고리 없는 상품 610개, 번역 표에 없는 코드 2개. ctgr는 left join."><b>T8</b> <span class="tn">카테고리 빈칸</span><p>카테고리 없는 상품 610개, 번역 표에 없는 코드 2개. ctgr는 LEFT JOIN.</p></li><li data-q="t9리뷰 중복주문 하나에 리뷰 여러 건, rvw_id도 중복. 주문당 최신 1건만."><b>T9</b> <span class="tn">리뷰 중복</span><p>주문 하나에 리뷰 여러 건, rvw_id도 중복. 주문당 최신 1건만.</p></li><li data-q="t10좌표 중복geo_zip은 우편번호 앞자리마다 여러 행. 그대로 join 하면 행이 불어난다."><b>T10</b> <span class="tn">좌표 중복</span><p>geo_zip은 우편번호 앞자리마다 여러 행. 그대로 JOIN 하면 행이 불어난다.</p></li><li data-q="t11탈퇴 고객탈퇴하면 개인정보가 지워지고 deleted_at만 남는다."><b>T11</b> <span class="tn">탈퇴 고객</span><p>탈퇴하면 개인정보가 지워지고 deleted_at만 남는다.</p></li><li data-q="t12약어 열 이름sale_amt(판매가), dlv_fee(배송비), inst_cnt(할부), uf(주)… 이 지도에서 뜻을 찾는다."><b>T12</b> <span class="tn">약어 열 이름</span><p>sale_amt(판매가), dlv_fee(배송비), inst_cnt(할부), uf(주)… 이 지도에서 뜻을 찾는다.</p></li><li data-q="t13select * 금지(고객 표)cust의 개인정보 열은 권한이 없어서 select * 가 오류 난다. 열을 골라 쓴다."><b>T13</b> <span class="tn">SELECT * 금지(고객 표)</span><p>cust의 개인정보 열은 권한이 없어서 SELECT * 가 오류 난다. 열을 골라 쓴다.</p></li><li data-q="t14권역 범위권역 매니저 계정으로는 자기 권역 데이터만 보인다. db가 알아서 거른다."><b>T14</b> <span class="tn">권역 범위</span><p>권역 매니저 계정으로는 자기 권역 데이터만 보인다. DB가 알아서 거른다.</p></li></ul></section>
+    <section class="mets"><h2>합의된 지표 정의</h2><ul><li><b>순매출</b> <code>net_sales</code><p>유효 주문의 품목 판매가 합계에서, 그 주문들에 대한 환불 금액을 뺀 값 (헤알, 배송비 제외)</p></li><li><b>총거래액</b> <code>gmv</code><p>유효 주문의 품목 판매가 + 배송비 합계 (환불 차감 전)</p></li><li><b>주문 수</b> <code>order_count</code><p>기간 안에 들어온 유효 주문 건수</p></li><li><b>구매 고객 수</b> <code>customer_count</code><p>기간 안에 유효 주문을 한 사람 수 (cust_uid 기준)</p></li><li><b>재구매율</b> <code>repeat_rate</code><p>기간 안에 유효 주문을 2건 이상 한 사람 / 유효 주문을 한 사람 (%)</p></li><li><b>객단가</b> <code>aov</code><p>유효 주문의 품목 판매가 합 / 유효 주문 수 (헤알, 배송비 제외, 환불 차감 전)</p></li><li><b>취소율</b> <code>cancel_rate</code><p>테스트를 뺀 주문 중 취소(90)·주문 불가(91) 비율 (%)</p></li><li><b>환불률</b> <code>refund_rate</code><p>배송 완료(60) 주문 중 환불이 한 번이라도 있는 주문 비율 (%). 취소에 따른 환불은 제외</p></li><li><b>평균 배송일</b> <code>avg_delivery_days</code><p>배송 완료 주문의 주문 시각부터 배송 완료 시각까지 평균 일수</p></li><li><b>배송 지연율</b> <code>late_rate</code><p>배송 완료 주문 중 실제 도착일(현지)이 예상 배송일보다 늦은 비율 (%)</p></li><li><b>평균 리뷰 점수</b> <code>avg_review_score</code><p>기간 안 주문들의 리뷰 점수 평균. 주문당 가장 최근 답변 1건만</p></li></ul></section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const q = document.getElementById('q');
+  const rows = [...document.querySelectorAll('tr[data-q]')];
+  const cards = [...document.querySelectorAll('.tcard')];
+  const groups = [...document.querySelectorAll('[data-group]')];
+  const traps = [...document.querySelectorAll('#traps li')];
+  const count = document.getElementById('count');
+  const empty = document.getElementById('empty');
+  function apply() {
+    const w = q.value.trim().toLowerCase();
+    let n = 0;
+    rows.forEach(r => { const hit = !w || r.dataset.q.includes(w); r.hidden = !hit; if (hit && w) n++; });
+    cards.forEach(c => { c.hidden = !!w && !c.querySelector('tr[data-q]:not([hidden])'); });
+    groups.forEach(g => { g.hidden = !!w && !g.querySelector('.tcard:not([hidden])'); });
+    traps.forEach(t => { t.hidden = !!w && !t.dataset.q.includes(w); });
+    count.textContent = w ? `열 ${n}개` : '';
+    empty.hidden = !w || n > 0;
+  }
+  q.addEventListener('input', apply);
+  document.querySelectorAll('.chips button').forEach(b => b.addEventListener('click', () => { q.value = b.dataset.w; apply(); q.focus(); }));
+})();
+</script>

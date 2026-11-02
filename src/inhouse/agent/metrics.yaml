@@ -234,8 +234,8 @@ metrics:
 column_notes:
   ord:
     ord_dtm: "timestamptz(한 순간). ::date는 접속 시간대에 따라 바뀌니 현지 날짜는 (ord_dtm AT TIME ZONE 'America/Sao_Paulo')::date"
-    aprv_dtm: "UTC로 저장"
-    dlv_cust_dtm: "UTC로 저장. 배송 완료가 아니면 NULL"
+    aprv_dtm: "시각(한 순간). 날짜는 AT TIME ZONE 'America/Sao_Paulo'로 자른다"
+    dlv_cust_dtm: "시각(한 순간). 날짜는 AT TIME ZONE 'America/Sao_Paulo'로 자른다. 배송 완료가 아니면 NULL"
     stat_cd: "cd_ord_stat 참조. 10 생성, 20 승인, 30 송장, 40 출고 준비, 50 배송 중, 60 배송 완료, 90 취소, 91 주문 불가"
     is_test: "테스트 주문. 항상 제외"
     est_dlv_dt: "예상 배송일 (현지 날짜)"
@@ -255,10 +255,10 @@ column_notes:
   rfnd:
     rfnd_amt: "환불 금액(헤알). 취소 주문은 결제액 전액"
     rsn_cd: "CNCL 취소, DMG 파손, WRONG 오배송, LATE 지연"
-    rfnd_dtm: "UTC로 저장"
+    rfnd_dtm: "시각(한 순간). 날짜는 AT TIME ZONE 'America/Sao_Paulo'로 자른다"
   rvw:
     rvw_id: "중복 있음. 행 키는 rvw_sn"
-    ans_dtm: "UTC로 저장"
+    ans_dtm: "시각(한 순간). 날짜는 AT TIME ZONE 'America/Sao_Paulo'로 자른다"
   prd:
     ctgr_cd: "결측 있음, ctgr에 없는 코드도 있음 → LEFT JOIN"
   geo_zip:

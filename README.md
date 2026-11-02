@@ -8,6 +8,7 @@
 - "매출"처럼 고객마다 뜻이 다른 단어는 [지표 사전](src/inhouse/agent/metrics.yaml)(공통 규칙 12개 · 지표 11개 · 열 메모)으로 고정하고, 정답 SQL 50문항으로 정확도를 측정한다.
 - 에이전트는 Claude tool-use 루프(`src/inhouse/agent/agent.py`), 답의 숫자마다 쿼리 ID를 단다. 정답셋 50문항(`eval/questions.yaml`)을 실행 결과 값으로 채점한다 ([eval/README.md](eval/README.md)).
 - 도구 4개 `list_tables` · `describe_table` · `lookup_metric` · `run_sql`은 모두 묻는 직원의 DB 역할로 동작해서, 표 목록·열·표본 값도 그 사람의 권한을 따른다.
+- 정답 SQL 쓸 때 옆에 띄우는 표·열 사전: [docs/db-map.html](docs/db-map.html) (`python scripts/build_db_map.py`로 DB에서 다시 만듦)
 - 고객 요구사항: [docs/customer-brief.md](docs/customer-brief.md) · 스키마와 함정: [docs/schema-notes.md](docs/schema-notes.md) · 설계: [docs/decisions](docs/decisions/)
 
 ## 데이터
