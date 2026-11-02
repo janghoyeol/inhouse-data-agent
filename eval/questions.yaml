@@ -530,7 +530,13 @@ questions:
     question: 탈퇴한 고객은 몇 명이야?
     checks: [T11, T3]
     expect: result
-    gold_sql: null
+    gold_by: together
+    gold_sql: |
+      -- 호열 첫 답 count(distinct deleted_at)도 1,922였지만 '탈퇴 순간'을 센 것 → 사람(cust_uid)을 세도록 같이 고침
+      -- count(deleted_at) = 1,980은 행(고객번호) 수
+      select count(distinct cust_uid) from cust
+      where deleted_at is not null
+        and is_test_acct = false
   - id: D07
     category: trap
     db_user: u_e001
