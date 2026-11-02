@@ -602,7 +602,15 @@ questions:
     question: 고객이 사는 우편번호 앞자리 중 좌표 정보가 없는 것은 몇 개야?
     checks: [T10]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- LEFT JOIN 후 오른쪽이 빈 행 = 짝 없는 우편번호. 좌표 표는 앞자리당 여러 행(T10)이라 count(*)는 1,509만, 고객 행 기준 278
+      -- 우편번호 종류를 세므로 count(distinct). 조인 키(우편좌표.zip_pfx is null)로 걸러도 157로 같다
+      select count(distinct 고객.zip_pfx)
+      from cust as 고객
+        left join geo_zip as 우편좌표 on 고객.zip_pfx = 우편좌표.zip_pfx
+      where 우편좌표.lat is null
+        and 우편좌표.lng is null
 
   # ---- E. 권한·범위: 묻는 사람에 따라 답이 다르거나 거절해야 함 ------------------------------------
   - id: E01

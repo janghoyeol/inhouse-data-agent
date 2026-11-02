@@ -33,7 +33,7 @@
         (2026-11-02 Compose 첫 실제 검증: db 컨테이너 healthy, loader 이미지 빌드·Kaggle 내려받기·적재 37.5초, u_e001로 localhost:5432 접속해 D01 1,068→1,176→1,176→1,166, u_e104 808, tel_no 권한 거절. 샌드박스라 loader는 프록시 때문에 host 네트워크로 실행 — Compose 내부 네트워크(db 호스트명)만 미검증) → DBeaver로 접속(postgres / 직원 역할 u_e001 등, 비밀번호 tucanova-local) → D01 1~4단계를 직접 돌려 보기
         호열은 SQL·DB 접속이 처음에 가까움: 용어(DB·SQL·정답 SQL)부터, 파일은 GitHub 링크로 안내
   - 호열 선호 (2026-11-02): 오타는 지적하지 않는다(오타 때문에 오류 나서 물어볼 때만). 문항을 넘어갈 때마다 다음 질문 문장을 다시 준다
-    진행: D01 together · D02 hoyeol 94,990 · D03 hoyeol 406,900 · D04 hoyeol 610(질문을 '코드가 아예 없는'으로 고침) · D05 hoyeol 6,863 · D06 together 1,922(count 괄호 안이 세는 대상) · D07 hoyeol 4(표 3개 JOIN) · D08 hoyeol 73 · D09 hoyeol 1,922.41(팬아웃·서브쿼리) — DB 지도 https://claude.ai/artifact/3wmFVkooahx9KuaS2eTyS9
+    진행: D01 together · D02 hoyeol 94,990 · D03 hoyeol 406,900 · D04 hoyeol 610(질문을 '코드가 아예 없는'으로 고침) · D05 hoyeol 6,863 · D06 together 1,922(count 괄호 안이 세는 대상) · D07 hoyeol 4(표 3개 JOIN) · D08 hoyeol 73 · D09 hoyeol 1,922.41(팬아웃·서브쿼리) · D10 hoyeol 157(LEFT JOIN 짝 없음) — D 10개 완료, 다음 E 7개 — DB 지도 https://claude.ai/artifact/3wmFVkooahx9KuaS2eTyS9
   - [ ] **그다음: 호열과 정답 SQL을 처음부터 천천히.** 호열 요청: "세심하게, 학습이 필요한 부분" → 정답을 먼저 주지 말고
         D01처럼 단순 SQL → 결과 확인 → 함정 하나씩 짚는 방식. 필요하면 표·열 설명부터 (호열이 GitHub 파일 열람이 불편할 수 있음 → 대화에 요약)
   - [ ] 호열: 초안 30개 검토 + D02~D10·E 7개(16개) 작성 → Claude가 check_gold로 검산
