@@ -487,7 +487,14 @@ questions:
     question: 구 시스템 월별 요약표 기준으로 2017년 11월 SP 매출은 몇 헤알이었어?
     checks: [T6]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 구 요약표는 천 헤알 단위(T6) → ×1000. 소수 첫째 자리(100헤알)에서 반올림된 값이라 406,900은 근삿값
+      -- (반올림 전 406,854.38, 지금 정의의 순매출은 349,559.15 — 정의가 달라 섞어 비교하지 않는다)
+      select SUM(sls_amt_k * 1000) from mon_sls_smry_old
+      where yyyymm = '201711'
+      and uf = 'SP'
+    compare: {tol: 0.001}
   - id: D04
     category: trap
     db_user: u_e001
