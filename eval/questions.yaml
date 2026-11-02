@@ -576,7 +576,26 @@ questions:
     question: 2017년 결제 금액 합계와 판매가+배송비 합계의 차이는 얼마야? (유효 주문 기준)
     checks: [T7]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 결제와 품목은 둘 다 주문 하나에 여러 행 → 한 SQL에서 같이 JOIN하면 행이 불어난다(팬아웃). 따로 더한 뒤 뺀다
+      -- 결제 7,092,491.65 − (판매가+배송비) 7,090,569.24 = 1,922.41
+      select
+      (select sum(결제.pay_amt)
+       from ord as 주문
+         join ord_pay as 결제 on 주문.ord_no = 결제.ord_no
+       where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+         and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+         and 주문.is_test = false
+         and 주문.stat_cd not in (90, 91))
+      -
+      (select sum(주문품목.sale_amt + dlv_fee)
+       from ord as 주문
+         join ord_item as 주문품목 on 주문.ord_no = 주문품목.ord_no
+       where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+         and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+         and 주문.is_test = false
+         and 주문.stat_cd not in (90, 91))
   - id: D10
     category: trap
     db_user: u_e001
