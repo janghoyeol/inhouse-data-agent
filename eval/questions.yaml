@@ -497,10 +497,15 @@ questions:
   - id: D04
     category: trap
     db_user: u_e001
-    question: 카테고리 정보가 없는 상품은 몇 개야?
+    question: 카테고리 코드가 아예 없는 상품은 몇 개야?
     checks: [T8]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 코드가 비어 있는 상품만 (610). 코드는 있는데 번역 표(ctgr)에 없는 13개(pc_gamer 등)는 카테고리 정보가 있으니 제외
+      -- 원래 질문 "카테고리 정보가 없는"은 610/623 두 가지로 읽혀서 고침 (2026-11-02)
+      select count(*) from prd
+      where ctgr_cd is null
   - id: D05
     category: trap
     db_user: u_e001
