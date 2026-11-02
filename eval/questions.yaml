@@ -512,7 +512,18 @@ questions:
     question: 2018년 4월 주문 중 리뷰가 달린 주문은 몇 건이야?
     checks: [T9, T2, T1]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 현지 날짜 범위(4/1 이상 5/1 미만), 유효 주문(테스트·취소·불가 제외), 리뷰 여러 개 달린 주문은 한 번(distinct, T9)
+      -- distinct 없으면 6,894, 취소·불가 포함하면 6,883
+      select count(distinct 주문.ord_no)
+      from ord as 주문
+      join rvw as 리뷰
+        on 주문.ord_no = 리뷰.ord_no
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2018-04-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-05-01'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
   - id: D06
     category: trap
     db_user: u_e001
