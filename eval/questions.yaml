@@ -494,7 +494,6 @@ questions:
       select SUM(sls_amt_k * 1000) from mon_sls_smry_old
       where yyyymm = '201711'
       and uf = 'SP'
-    compare: {tol: 0.001}
   - id: D04
     category: trap
     db_user: u_e001
