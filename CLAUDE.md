@@ -34,6 +34,8 @@
         호열은 SQL·DB 접속이 처음에 가까움: 용어(DB·SQL·정답 SQL)부터, 파일은 GitHub 링크로 안내
   - 호열 선호 (2026-11-02): 오타는 지적하지 않는다(오타 때문에 오류 나서 물어볼 때만). 문항을 넘어갈 때마다 다음 질문 문장을 다시 준다
     진행: D01 together · D02 hoyeol 94,990 · D03 hoyeol 406,900 · D04 hoyeol 610(질문을 '코드가 아예 없는'으로 고침) · D05 hoyeol 6,863 · D06 together 1,922(count 괄호 안이 세는 대상) · D07 hoyeol 4(표 3개 JOIN) · D08 hoyeol 73 · D09 hoyeol 1,922.41(팬아웃·서브쿼리) · D10 hoyeol 157(LEFT JOIN 짝 없음) · E01 hoyeol 3,883,073.11(u_e104로 접속, 권역 조건 없이) — 남은 것 E02·E03·E05·E07·E08·E10 (6개). WITH는 아직 어려워함 → 강요하지 말 것 — DB 지도 https://claude.ai/artifact/3wmFVkooahx9KuaS2eTyS9
+  - 호열 페이스 (2026-11-02 합의): 하루 10~11문항. E 6개 끝나면 → A·B·C 초안 30개 검토 → **연습용 문제를 더 만든다** (호열 요청)
+    매 세션 시작: 로컬 DB(Docker Desktop 켜기 → `docker compose up -d db`, 데이터는 볼륨에 남아 있음) → DBeaver → 남은 문항부터
   - [ ] **그다음: 호열과 정답 SQL을 처음부터 천천히.** 호열 요청: "세심하게, 학습이 필요한 부분" → 정답을 먼저 주지 말고
         D01처럼 단순 SQL → 결과 확인 → 함정 하나씩 짚는 방식. 필요하면 표·열 설명부터 (호열이 GitHub 파일 열람이 불편할 수 있음 → 대화에 요약)
   - [ ] 호열: 초안 30개 검토 + D02~D10·E 7개(16개) 작성 → Claude가 check_gold로 검산
