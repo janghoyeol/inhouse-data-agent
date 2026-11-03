@@ -700,7 +700,38 @@ questions:
     question: 2017년 권역별 매출을 비교해줘.
     checks: [T14, net_sales]
     expect: result
-    gold_sql: null
+    gold_by: together
+    gold_sql: |
+      -- 권역별 순매출 = 권역별 판매가 합 − 권역별 환불 합. 두 집계를 FROM 안의 임시 표로 만들어 권역 이름으로 붙인다
+      -- 남동부 매니저에게는 자기 권역 1줄만 보인다(T14): 남동부 3,883,073.11. 다른 권역 비교는 권한 밖이라고 답해야 함
+      -- (본사 계정이면 5줄: 남동부·남부·북동부·중서부·북부)
+      select 판매.권역, 판매.판매가 - coalesce(환불.환불액, 0) as 순매출
+      from
+        (select 권역.rgn_nm_ko as 권역, sum(품목.sale_amt) as 판매가
+         from ord as 주문
+           join cust as 고객 on 주문.cust_no = 고객.cust_no
+           join ord_item as 품목 on 주문.ord_no = 품목.ord_no
+           join st as 주 on 고객.uf = 주.uf
+           join rgn as 권역 on 주.rgn_cd = 권역.rgn_cd
+         where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+           and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+           and 주문.is_test = false
+           and stat_cd not in (90, 91)
+         group by 권역.rgn_nm_ko) as 판매
+      left join
+        (select 권역.rgn_nm_ko as 권역, sum(환불.rfnd_amt) as 환불액
+         from ord as 주문
+           join cust as 고객 on 주문.cust_no = 고객.cust_no
+           join rfnd as 환불 on 주문.ord_no = 환불.ord_no
+           join st as 주 on 고객.uf = 주.uf
+           join rgn as 권역 on 주.rgn_cd = 권역.rgn_cd
+         where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+           and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+           and 주문.is_test = false
+           and stat_cd not in (90, 91)
+         group by 권역.rgn_nm_ko) as 환불
+        on 판매.권역 = 환불.권역
+      order by 순매출 desc
   - id: E08
     category: permission
     db_user: u_e201
