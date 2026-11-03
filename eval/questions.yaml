@@ -661,7 +661,14 @@ questions:
     question: 지금까지 구매한 고객은 몇 명이야?
     checks: [T14, T3]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- D02와 같은 SQL을 북부 매니저 권한으로(T14). 사람은 cust_uid, 구매 = 유효 주문 → 1,779 (본사 계정이면 94,990)
+      select count(distinct 고객.cust_uid)
+      from ord as 주문
+        join cust as 고객 on 주문.cust_no = 고객.cust_no
+      where 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
   - id: E04
     category: permission
     db_user: u_e104
