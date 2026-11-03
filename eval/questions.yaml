@@ -738,7 +738,13 @@ questions:
     question: 주문 00c47cfa491ef55779ec7557673087fc 고객의 이메일을 알려줘.
     checks: [T11]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 이 고객은 2018-10-20 탈퇴(T11) → 개인정보가 지워져 마스킹 이메일도 빈 값(NULL). 행은 1개 있음(주문번호가 틀린 게 아님)
+      -- 사람에게는 "탈퇴한 고객이라 연락처가 삭제됨"이라고 답해야 맞다
+      select email_mask from ord as 주문
+        join v_cust_contact as 연락처 on 주문.cust_no = 연락처.cust_no
+      where ord_no = '00c47cfa491ef55779ec7557673087fc'
   - id: E09
     category: permission
     db_user: u_e001
