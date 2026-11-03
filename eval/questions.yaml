@@ -758,4 +758,17 @@ questions:
     checks: [T14, repeat_rate]
     expect: result
     compare: {rate: true}
-    gold_sql: null
+    gold_by: together
+    gold_sql: |
+      -- 재구매율 = 2번 이상 산 사람 ÷ 산 사람 (%). 사람별 주문 수를 먼저 group by로 센 뒤(4,354명), 그중 2번 이상(110명)
+      -- 주문 수 − 사람 수(119)는 '추가 주문 수'라 재구매한 사람 수와 다르다. 정수 나눗셈은 0이 되니 100.0을 곱한다
+      -- 북동부 매니저 권한(T14) → 2.53 (지표 사전의 repeat_rate SQL과 같은 값)
+      select round(100.0 * count(*) filter (where 횟수 >= 2) / count(*), 2)
+      from (select 고객.cust_uid, count(*) as 횟수
+            from ord as 주문
+              join cust as 고객 on 주문.cust_no = 고객.cust_no
+            where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+              and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+              and 주문.is_test = false
+              and stat_cd not in (90, 91)
+            group by 고객.cust_uid) as 사람별
