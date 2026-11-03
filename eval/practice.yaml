@@ -1,0 +1,84 @@
+# 연습 문제 (채점용 정답셋과 별개). 호열 SQL 연습용 — 정답은 아래에 있으니 풀기 전에는 보지 말 것.
+# 2026-11-03 1차: 비율·평균·나눗셈 중심 5문항 (호열 요청: "산수 부분을 더 공부해야겠다")
+
+practice:
+  - id: P01
+    db_user: u_e001
+    question: "2018년 1분기 주문(테스트 주문만 제외) 중 배송 완료(60)된 주문의 비율(%)은? 소수 둘째 자리까지"
+    learn: [count filter, 100.0 곱하기, round]
+    answer: 97.26
+    gold_sql: |
+      select round(100.0 * count(*) filter (where stat_cd = 60) / count(*), 2)
+      from ord as 주문
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2018-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-04-01'
+        and 주문.is_test = false
+
+  - id: P02
+    db_user: u_e001
+    question: "2017년 유효 주문 하나에 품목이 평균 몇 개 들어 있었어? 소수 둘째 자리까지"
+    learn: [정수 나눗셈 함정(1이 나옴), 1.0 곱하기, count(distinct)]
+    answer: 1.14
+    gold_sql: |
+      select round(1.0 * count(*) / count(distinct 주문.ord_no), 2)
+      from ord as 주문
+        join ord_item as 품목 on 주문.ord_no = 품목.ord_no
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
+
+  - id: P03
+    db_user: u_e001
+    question: "2017년 유효 주문의 결제 수단별 평균 결제 금액을 큰 순서로 보여줘. 소수 둘째 자리까지"
+    learn: [avg, group by, order by ... desc]
+    answer: "credit_card 162.13 / boleto 146.08 / debit_card 103.06 / voucher 56.83"
+    gold_sql: |
+      select 결제.pay_mthd, round(avg(결제.pay_amt), 2) as 평균
+      from ord as 주문
+        join ord_pay as 결제 on 주문.ord_no = 결제.ord_no
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
+      group by 결제.pay_mthd
+      order by 평균 desc
+
+  - id: P04
+    db_user: u_e001
+    question: "2017년 배송 완료된 주문의 권역별 배송 지연율(%)을 높은 순서로 보여줘. 소수 둘째 자리까지"
+    learn: [group by + filter 비율, 지표 정의(late_rate) 읽기, 권역 JOIN]
+    answer: "북동부 10.95 / 남동부 5.09 / 북부 5.08 / 남부 5.02 / 중서부 4.81"
+    gold_sql: |
+      select 권역.rgn_nm_ko,
+             round(100.0 * count(*) filter (where (주문.dlv_cust_dtm at time zone 'america/sao_paulo')::date > 주문.est_dlv_dt)
+                   / count(*), 2) as 지연율
+      from ord as 주문
+        join cust as 고객 on 주문.cust_no = 고객.cust_no
+        join st as 주 on 고객.uf = 주.uf
+        join rgn as 권역 on 주.rgn_cd = 권역.rgn_cd
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+        and 주문.is_test = false
+        and 주문.stat_cd = 60
+        and 주문.dlv_cust_dtm is not null
+      group by 권역.rgn_nm_ko
+      order by 지연율 desc
+
+  - id: P05
+    db_user: u_e105
+    question: "(남부 매니저) 2017년 객단가는? 합의된 객단가 정의대로, 소수 둘째 자리까지"
+    learn: [분모는 품목이 아니라 주문, JOIN 뒤 count(*)는 품목 수(118.17이 나옴), 품목 없는 주문 2건(JOIN하면 빠짐 → 134.74)]
+    answer: 134.70
+    gold_sql: |
+      select round(
+        (select sum(품목.sale_amt) from ord as 주문 join ord_item as 품목 on 주문.ord_no = 품목.ord_no
+         where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+           and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+           and 주문.is_test = false and 주문.stat_cd not in (90, 91))
+        /
+        (select count(*) from ord as 주문
+         where (ord_dtm at time zone 'america/sao_paulo')::date >= '2017-01-01'
+           and (ord_dtm at time zone 'america/sao_paulo')::date < '2018-01-01'
+           and 주문.is_test = false and 주문.stat_cd not in (90, 91))
+      , 2)
