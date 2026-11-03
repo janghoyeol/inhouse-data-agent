@@ -645,7 +645,16 @@ questions:
     question: 2018년 주문 수는?
     checks: [T14, order_count]
     expect: result
-    gold_sql: null
+    gold_by: hoyeol
+    gold_sql: |
+      -- 남부 매니저 권한(T14, 권역 조건 없이), 합의된 '주문 수' = 유효 주문, 현지 날짜
+      -- 남부 전체 14,148 → 2018년 유효 7,393 (본사 계정이면 53,532). 데이터는 2018-10까지라 2018년은 1년치가 아님
+      select count(*)
+      from ord as 주문
+      where (ord_dtm at time zone 'america/sao_paulo')::date >= '2018-01-01'
+        and (ord_dtm at time zone 'america/sao_paulo')::date < '2019-01-01'
+        and 주문.is_test = false
+        and 주문.stat_cd not in (90, 91)
   - id: E03
     category: permission
     db_user: u_e101
