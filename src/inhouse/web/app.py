@@ -4,6 +4,7 @@
 - 답은 에이전트(agent.ask)가 직원 역할로 DB를 조회해 만들고, 쓴 SQL과 결과·쿼리 ID를 같이 돌려준다.
 - 공개 데모를 가정해 하루(KST) Claude 비용 상한과 IP별 질문 수 상한(분당·하루)을 둔다.
 - 감사 로그 API(/api/audit)는 다른 방문자의 질문이 보이므로 ENABLE_AUDIT_API=1일 때만 켠다.
+- 환불 제안·승인(2단계 2b)은 실제 환불 기록을 만들므로 ENABLE_APPROVALS=1일 때만 켠다 (에이전트 제안 도구 + /approvals 승인 화면).
 
 실행: DATABASE_URL=… TCN_USER_PASSWORD=… ANTHROPIC_API_KEY=… uvicorn inhouse.web.app:app
 """
@@ -23,6 +24,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from ..agent import agent as agent_mod
+from ..agent import refunds
 from ..agent.audit import JsonlAudit
 from ..agent.personas import PERSONAS
 from ..agent.tools import Toolbox
@@ -36,6 +38,12 @@ MAX_ROWS_SHOWN = 20
 class Ask(BaseModel):
     db_user: str
     question: str
+
+
+class Decide(BaseModel):
+    db_user: str
+    approve: bool
+    note: str | None = None
 
 
 class CostGuard:
@@ -110,6 +118,9 @@ def _call_view(call) -> dict[str, Any]:
                     error=r.get("error") or None, columns=r.get("columns", []),
                     rows=r.get("rows", [])[:MAX_ROWS_SHOWN], row_count=r.get("row_count", 0),
                     truncated=bool(r.get("truncated")) or r.get("row_count", 0) > MAX_ROWS_SHOWN)
+    elif call.name == "propose_refund":
+        view.update(input=call.input, req_no=r.get("req_no"), status=r.get("status"), error=r.get("error"),
+                    expires_at=r.get("expires_at"))
     elif call.name in ("search_docs", "read_doc"):
         keep = ("chunk_id", "doc_id", "version", "title", "status", "eff_from", "eff_to", "approval_no", "heading",
                 "content")
@@ -123,8 +134,13 @@ def _call_view(call) -> dict[str, Any]:
 
 
 def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | None = None,
-               rate_limit: RateLimit | None = None, audit_api: bool | None = None) -> FastAPI:
-    """ask_fn(db_user, question) → agent.Answer. 테스트에서는 가짜를 넣는다."""
+               rate_limit: RateLimit | None = None, audit_api: bool | None = None, dsn: str | None = None,
+               user_password: str | None = None, approvals: bool | None = None) -> FastAPI:
+    """ask_fn(db_user, question) → agent.Answer. 테스트에서는 가짜를 넣는다. 승인 화면은 dsn·user_password로 DB에 직접 붙는다."""
+    if approvals is None:
+        approvals = os.environ.get("ENABLE_APPROVALS") == "1"
+    dsn = dsn or os.environ.get("DATABASE_URL")
+    user_password = user_password or os.environ.get("TCN_USER_PASSWORD")
     cap = cost_cap_usd if cost_cap_usd is not None else float(os.environ.get("DAILY_COST_CAP_USD", "0.5"))
     guard = CostGuard(cap)
     limiter = rate_limit or RateLimit(int(os.environ.get("RATE_PER_MINUTE", "6")),
@@ -144,7 +160,8 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
         audit = JsonlAudit(audit_path)
 
         def ask_fn(db_user: str, question: str):
-            return agent_mod.ask(client, Toolbox(dsn, pw, db_user, audit, max_rows=100), question, model=model)
+            return agent_mod.ask(client, Toolbox(dsn, pw, db_user, audit, max_rows=100, allow_propose=approvals),
+                                 question, model=model)
     else:
         audit_path = None
 
@@ -157,6 +174,10 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
         return resources.files("inhouse.web").joinpath("static/index.html").read_text(encoding="utf-8")
+
+    @app.get("/api/config")
+    def config() -> dict[str, Any]:
+        return {"approvals": approvals}
 
     @app.get("/api/personas")
     def personas() -> list[dict[str, Any]]:
@@ -189,6 +210,36 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
                 "doc_citations": getattr(ans, "doc_citations", []), "model": ans.model,
                 "turns": ans.turns, "cost_usd": ans.cost_usd, "seconds": ans.seconds,
                 "stop_reason": ans.stop_reason, "calls": [_call_view(c) for c in ans.calls]}
+
+    # ---- 2단계 승인 화면 (ENABLE_APPROVALS) -------------------------------------------------
+    def _need_approvals(db_user: str | None = None) -> None:
+        if not approvals:
+            raise HTTPException(404, "Not Found")
+        if db_user is not None and db_user not in PERSONAS:
+            raise HTTPException(400, "알 수 없는 직원입니다. 목록에서 고르세요.")
+
+    @app.get("/approvals", response_class=HTMLResponse)
+    def approvals_page() -> str:
+        _need_approvals()
+        return resources.files("inhouse.web").joinpath("static/approvals.html").read_text(encoding="utf-8")
+
+    @app.get("/api/requests")
+    def list_requests(db_user: str) -> dict[str, Any]:
+        """그 직원 권한으로 보이는 환불 제안 (권역 매니저는 자기 권역 고객 주문만)."""
+        _need_approvals(db_user)
+        return {"db_user": db_user, "role": PERSONAS[db_user]["role"],
+                "requests": refunds.list_requests(dsn, user_password, db_user)}
+
+    @app.post("/api/requests/{req_no}/decide")
+    def decide(req_no: int, body: Decide, request: Request) -> dict[str, Any]:
+        """사람이 승인·거절한다. 규칙(승인권자·권역·한도·본인 제안·만료·이미 처리)은 DB 함수가 검사한다."""
+        _need_approvals(body.db_user)
+        if not limiter.allow(RateLimit.client_ip(request)):
+            raise HTTPException(429, "요청이 너무 잦습니다. 잠시 뒤에 다시 시도해 주세요.")
+        try:
+            return refunds.decide(dsn, user_password, body.db_user, req_no, body.approve, body.note)
+        except refunds.RefundError as e:
+            raise HTTPException(403, str(e))
 
     @app.get("/api/audit")
     def audit_log(limit: int = 20) -> list[dict[str, Any]]:

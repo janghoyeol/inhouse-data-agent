@@ -76,6 +76,9 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
 .dst.draft, .dst.unapproved { color: var(--warn); background: var(--warn-soft); }
 .docbody { padding: 8px 10px 10px; font-size: .86rem; overflow-wrap: anywhere; }
 .dmeta { color: var(--muted); font-size: .78rem; padding: 0 10px; }
+.prop { margin: 0 0 6px; padding: 8px 10px; border-radius: 8px; font-size: .9rem; }
+.prop.ok { background: var(--accent-soft); } .prop.bad { background: var(--warn-soft); color: var(--warn); }
+#approvals-link { display: none; font-size: .88rem; }
 </style>
 </head>
 <body>
@@ -83,6 +86,7 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
   <header>
     <h1>Tucanova 데이터 에이전트</h1>
     <span class="tag">가상 고객사</span>
+    <a id="approvals-link" href="/approvals">환불 승인 화면 →</a>
     <p class="sub">사내 DB와 사내 문서에 자연어로 묻고, 묻는 사람의 권한 안에서 답한다. 숫자에는 쿼리 ID, 규정에는 문서 조각과 원문 인용이 붙는다.</p>
   </header>
 
@@ -204,6 +208,14 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
         <div class="res">${table(c.columns || [], c.rows || [])}</div>
       </details>`).join("")}</div>`;
   }
+  function proposals(calls) {
+    const ps = calls.filter(c => c.tool === "propose_refund");
+    if (!ps.length) return "";
+    return `<div class="srcs"><h4>환불 제안</h4>${ps.map(c => c.req_no
+      ? `<p class="prop ok">제안 #${c.req_no} 등록 — 승인 대기 (만료 ${esc(c.expires_at)}). 환불은 승인권자가 승인해야 실행된다.
+         <a href="/approvals?as=u_e203">승인 화면 →</a></p>`
+      : `<p class="prop bad">제안 거절됨 — ${esc(c.error)}</p>`).join("")}</div>`;
+  }
   function scopeOf(u) {
     const p = personas.find(x => x.db_user === u);
     if (!p) return "";
@@ -222,7 +234,7 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
       checks[col] = {};
       (d.doc_citations || []).forEach(c => (checks[col][c.chunk_id] ||= []).push(c));
       const cited = new Set((d.doc_citations || []).map(c => c.chunk_id));
-      body.innerHTML = `<div class="answer">${md(d.answer || "(답 없음)", col)}</div>${sources(d.calls, col)}${docs(d.calls, col, cited)}`;
+      body.innerHTML = `<div class="answer">${md(d.answer || "(답 없음)", col)}</div>${proposals(d.calls)}${sources(d.calls, col)}${docs(d.calls, col, cited)}`;
       body.querySelectorAll("a.cite").forEach(a => a.addEventListener("click", () => {
         const t = document.getElementById(a.getAttribute("href").slice(1)); if (t) t.open = true;
       }));
@@ -234,6 +246,7 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
 
   async function init() {
     personas = await (await fetch("/api/personas")).json();
+    try { if ((await (await fetch("/api/config")).json()).approvals) document.getElementById("approvals-link").style.display = "inline"; } catch (e) {}
     const opts = personas.map(p => `<option value="${p.db_user}">${esc(p.region ? `${p.region} 권역 매니저` : p.role)} (${p.db_user})</option>`).join("");
     ["p0", "p1"].forEach((id, i) => {
       const s = document.getElementById(id);

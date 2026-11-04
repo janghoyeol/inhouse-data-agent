@@ -14,7 +14,7 @@ from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
 from ..data import docs as docs_mod
-from . import knowledge
+from . import knowledge, refunds
 from .runner import Runner
 
 SAMPLE_TYPES = ("text", "character", "smallint", "boolean")
@@ -60,6 +60,18 @@ TOOL_SCHEMAS = [
             "k": {"type": "integer", "description": "돌려받을 조각 수 (기본 5, 최대 10)"}}, "required": ["query"]},
     },
     {
+        "name": "propose_refund",
+        "description": "환불을 '제안'한다 (실행이 아니다). 사람 승인권자가 승인해야 환불이 실행된다. "
+                       "사용자가 환불 제안·처리를 명시적으로 요청했을 때만 쓴다. 금액은 run_sql로 계산한 값(쿼리 ID)이고, "
+                       "basis에는 적용한 규정 조각 ID와 그 금액을 만든 쿼리 ID를 적는다. 규칙(권한·남은 한도·중복·주문 상태)은 DB가 검사해 거절 이유를 돌려준다.",
+        "input_schema": {"type": "object", "properties": {
+            "ord_no": {"type": "string", "description": "주문 번호"},
+            "rsn_cd": {"type": "string", "enum": ["DMG", "WRONG", "LATE"], "description": "환불 사유 코드"},
+            "amt": {"type": "number", "description": "환불 금액 (헤알, run_sql 결과 그대로)"},
+            "basis": {"type": "string", "description": "근거: 규정 조각 ID와 인용, 금액을 계산한 쿼리 ID"}},
+            "required": ["ord_no", "rsn_cd", "amt", "basis"]},
+    },
+    {
         "name": "read_doc",
         "description": "문서 한 판의 모든 절을 읽는다. doc_key는 search_docs 결과의 '문서번호@v판' (예: POL-REF-001@v2). "
                        "조각 하나로 부족할 때(표, 적용 대상, 예외) 쓴다.",
@@ -70,10 +82,15 @@ TOOL_SCHEMAS = [
 
 class Toolbox:
     def __init__(self, dsn: str, user_password: str, db_user: str, audit, max_rows: int = 500,
-                 timeout_ms: int = 5000):
+                 timeout_ms: int = 5000, allow_propose: bool = False):
         self.dsn, self.user_password, self.db_user, self.audit = dsn, user_password, db_user, audit
+        self.allow_propose = allow_propose
         self.runner = Runner(dsn, user_password, audit, max_rows=max_rows, timeout_ms=timeout_ms)
         self.question: str | None = None
+
+    def schemas(self) -> list[dict[str, Any]]:
+        """이 도구 상자가 모델에게 보여줄 도구. 제안 기능이 꺼진 환경(공개 데모)에서는 propose_refund를 빼고 준다."""
+        return [s for s in TOOL_SCHEMAS if self.allow_propose or s["name"] != "propose_refund"]
 
     def call(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -89,6 +106,8 @@ class Toolbox:
                 return self.search_docs(args["query"], int(args.get("k") or 5))
             if name == "read_doc":
                 return self.read_doc(args["doc_key"])
+            if name == "propose_refund":
+                return self.propose_refund(args["ord_no"], args["rsn_cd"], args["amt"], args["basis"])
         except KeyError as e:
             return {"error": f"인자가 빠졌습니다: {e}"}
         except psycopg.Error as e:  # 문서 표가 아직 없는 DB 등. 모델에게 이유를 돌려주고 대화는 이어간다
@@ -202,3 +221,19 @@ class Toolbox:
         return {"doc": meta, "chunks": [{"chunk_id": c, "heading": h, "content": t,
                                          **{k: meta[k] for k in ("doc_id", "version", "status", "approval_no")}}
                                         for c, h, t in chunks]}
+
+    # ---- 2단계 환불 제안 (ADR 0004 결정 6). 제안만 — 승인 도구는 에이전트에게 없다 ----------------
+    def propose_refund(self, ord_no: str, rsn_cd: str, amt, basis: str) -> dict[str, Any]:
+        if not self.allow_propose:
+            return {"error": "이 환경에서는 환불 제안 기능이 꺼져 있습니다. 규정상 금액과 근거만 안내하세요."}
+        rec = {"kind": "refund_propose", "executed_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+               "db_user": self.db_user, "question": self.question, "ord_no": ord_no, "rsn_cd": rsn_cd,
+               "amt": amt, "basis": basis}
+        try:
+            out = refunds.propose(self.dsn, self.user_password, self.db_user, ord_no, rsn_cd, amt, basis)
+        except refunds.RefundError as e:
+            self.audit.write({**rec, "status": "refused", "error": str(e)})
+            return {"error": f"제안이 거절되었습니다: {e}"}
+        self.audit.write({**rec, "status": "pending", "req_no": out["req_no"]})
+        out["note"] = "제안만 등록되었습니다. 승인권자가 승인해야 환불이 실행됩니다. 고객에게 확정이라고 안내하지 마세요."
+        return out

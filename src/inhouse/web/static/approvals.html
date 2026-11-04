@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>환불 승인 · Tucanova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 승인권자가 자기 권한으로 보이는 환불 제안을 승인·거절한다. 규칙 검사는 DB 함수가 하고, 거절 이유를 그대로 보여준다 */
+:root {
+  --bg: #f3f5f2; --panel: #ffffff; --ink: #1c2420; --muted: #5f6b65; --line: #dbe2dd;
+  --accent: #0f6b5c; --accent-ink: #ffffff; --accent-soft: #e1efe9; --warn: #a3471a; --warn-soft: #fbede4;
+  --code-bg: #f1f4f2;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --panel: #19201d; --ink: #e3eae6; --muted: #98a59f; --line: #2b3531;
+  --accent: #5cc2ad; --accent-ink: #0d1a16; --accent-soft: #1c332d; --warn: #f0a27a; --warn-soft: #3a2519;
+  --code-bg: #141a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111614; --panel: #19201d; --ink: #e3eae6; --muted: #98a59f; --line: #2b3531;
+  --accent: #5cc2ad; --accent-ink: #0d1a16; --accent-soft: #1c332d; --warn: #f0a27a; --warn-soft: #3a2519;
+  --code-bg: #141a17; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin-bottom: 16px; }
+h1 { margin: 0; font-size: 1.4rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+a { color: var(--accent); }
+.bar { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+select { font: inherit; font-weight: 700; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); max-width: 100%; }
+.scope { color: var(--muted); font-size: .86rem; }
+.msg { margin: 12px 0 0; padding: 8px 12px; border-radius: 8px; }
+.msg.ok { background: var(--accent-soft); color: var(--accent); }
+.msg.bad { background: var(--warn-soft); color: var(--warn); }
+.list { display: grid; gap: 10px; margin-top: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+.top { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.no { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+.amt { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.st { font-size: .75rem; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; }
+.st.pending { color: var(--accent); } .st.executed { color: var(--ink); } .st.rejected, .st.expired { color: var(--warn); }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; font-size: .88rem; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
+code { font-family: var(--mono); font-size: .82em; background: var(--code-bg); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
+.act { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.act input { flex: 1 1 200px; min-width: 0; font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+button { font: inherit; font-weight: 700; padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+button.yes { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:focus-visible, select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>환불 승인</h1>
+    <p class="sub">에이전트와 CS가 올린 환불 제안을 사람이 승인한다. 승인하면 그때 환불 기록이 생긴다. 권한·권역·한도·본인 제안·만료는 DB가 검사한다.</p>
+    <a href="/">← 질문 화면</a>
+  </header>
+  <div class="bar">
+    <label for="who" class="scope">승인하는 사람</label>
+    <select id="who"></select>
+    <span class="scope" id="scope"></span>
+    <button type="button" id="reload">새로 고침</button>
+  </div>
+  <div id="msg"></div>
+  <div class="list" id="list"><p class="empty">불러오는 중</p></div>
+</div>
+<script>
+(() => {
+  const RSN = {DMG: "파손·불량", WRONG: "오배송", LATE: "배송 지연"};
+  const ST = {pending: "승인 대기", executed: "승인·환불 실행됨", rejected: "거절", expired: "만료"};
+  const SCOPE = {"CS 팀장": "승인 한도 R$ 500 · 전 권역", "본사 운영책임자": "승인 한도 없음 · 전 권역",
+                 "CS 담당": "제안만 할 수 있고 승인권은 없음", "본사 분석가": "승인권 없음"};
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+  const money = v => "R$ " + Number(v).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const who = document.getElementById("who"), list = document.getElementById("list"), msg = document.getElementById("msg");
+  let personas = [];
+  function say(text, ok) { msg.innerHTML = text ? `<p class="msg ${ok ? "ok" : "bad"}">${esc(text)}</p>` : ""; }
+  function card(r) {
+    const pend = r.status === "pending";
+    return `<article class="card" data-req="${r.req_no}">
+      <div class="top"><span class="no">제안 #${r.req_no}</span><span class="amt">${money(r.amt)}</span>
+        <span>${esc(RSN[r.rsn_cd] || r.rsn_cd)} (${esc(r.rsn_cd)})</span><span class="st ${esc(r.status)}">${ST[r.status] || esc(r.status)}</span></div>
+      <dl class="kv">
+        <dt>주문</dt><dd><code>${esc(r.ord_no)}</code> · 고객 주 ${esc(r.uf)} · 품목+배송비 ${money(r.order_total)}</dd>
+        <dt>근거</dt><dd>${esc(r.basis)}</dd>
+        <dt>제안</dt><dd>${esc(r.proposed_by)} · ${esc(r.proposed_at)}${pend ? ` · 만료 ${esc(r.expires_at)}` : ""}</dd>
+        ${r.decided_by || r.decided_at ? `<dt>처리</dt><dd>${esc(r.decided_by || "")} ${esc(r.decided_at || "")}${r.decision_note ? ` · ${esc(r.decision_note)}` : ""}${r.rfnd_no ? ` · 환불 기록 #${r.rfnd_no}` : ""}</dd>` : ""}
+      </dl>
+      ${pend ? `<div class="act"><input placeholder="메모 (거절할 때는 필수)" aria-label="메모">
+        <button class="yes" type="button" data-ok="1">승인</button><button type="button" data-ok="0">거절</button></div>` : ""}
+    </article>`;
+  }
+  let seq = 0;
+  async function load() {
+    const my = ++seq;   // 승인권자를 바꾸면 이전 목록의 버튼을 누를 수 없게 바로 비운다 (늦게 온 응답도 버림)
+    list.innerHTML = `<p class="empty">불러오는 중</p>`;
+    const p = personas.find(x => x.db_user === who.value);
+    document.getElementById("scope").textContent = p ? (p.region ? `${p.region} 권역 고객 주문만 · 승인 한도 R$ 2,000` : (SCOPE[p.role] || "")) : "";
+    const r = await fetch(`/api/requests?db_user=${encodeURIComponent(who.value)}`);
+    const d = await r.json();
+    if (my !== seq) return;
+    if (!r.ok) { list.innerHTML = `<p class="msg bad">${esc(d.detail || r.statusText)}</p>`; return; }
+    list.innerHTML = d.requests.length ? d.requests.map(card).join("") : `<p class="empty">이 사람에게 보이는 제안이 없습니다.</p>`;
+  }
+  list.addEventListener("click", async e => {
+    const b = e.target.closest("button[data-ok]"); if (!b) return;
+    const c = b.closest(".card"), req = c.dataset.req, note = c.querySelector("input").value.trim();
+    c.querySelectorAll("button").forEach(x => x.disabled = true);
+    const r = await fetch(`/api/requests/${req}/decide`, {method: "POST", headers: {"content-type": "application/json"},
+      body: JSON.stringify({db_user: who.value, approve: b.dataset.ok === "1", note: note || null})});
+    const d = await r.json();
+    if (r.ok) say(`제안 #${req}: ${ST[d.status] || d.status}`, d.status === "executed" || d.status === "rejected");
+    else say(`제안 #${req}을 처리하지 못했습니다 — ${d.detail || r.statusText}`, false);
+    await load();
+  });
+  who.addEventListener("change", () => { say(""); load(); });
+  document.getElementById("reload").addEventListener("click", () => { say(""); load(); });
+  (async () => {
+    personas = await (await fetch("/api/personas")).json();
+    who.innerHTML = personas.map(p => `<option value="${p.db_user}">${esc(p.region ? `${p.region} 권역 매니저` : p.role)} (${p.db_user})</option>`).join("");
+    const q = new URLSearchParams(location.search).get("as");
+    who.value = personas.some(p => p.db_user === q) ? q : "u_e203";
+    load();
+  })();
+})();
+</script>
+</body>
+</html>

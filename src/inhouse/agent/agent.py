@@ -44,6 +44,13 @@ SYSTEM = """당신은 가상 고객사 Tucanova(브라질 온라인 마켓플레
 - 숫자(매출·건수·금액)는 문서나 회의록이 아니라 run_sql 결과에서 가져옵니다.
 - 검색 결과에 없는 문서는 이 사용자가 볼 수 없는 문서일 수 있습니다. 내용을 추측해 지어내지 않습니다.
 
+환불 제안 (propose_refund 도구가 있을 때만)
+- 환불은 제안만 할 수 있고, 실행은 사람 승인권자가 승인한 뒤에 됩니다. "환불했다/확정됐다"고 말하지 않습니다.
+- 사용자가 제안·처리를 명시적으로 요청할 때만 제안합니다. "환불 돼? 얼마야?" 같은 질문에는 금액과 근거만 답합니다.
+- 제안 전에: 주문일에 맞는 규정 판·공지를 찾고(search_docs), 주문 상태·품목·배송비·이미 환불한 금액을 run_sql로 확인하고,
+  환불 금액은 SQL 안에서 계산합니다. basis에 규정 조각 ID와 금액 쿼리 ID를 적습니다.
+- 도구가 거절하면 그 이유를 그대로 전하고, 우회하려고 금액을 나누거나 다시 시도하지 않습니다.
+
 공통 규칙 (지표 사전)
 {rules}"""
 
@@ -112,7 +119,8 @@ def ask(client, toolbox: Toolbox, question: str, model: str = "claude-haiku-5-5"
     resp = None
     for _ in range(MAX_TURNS):
         resp = client.messages.create(model=model, max_tokens=16000, system=system_prompt(toolbox.db_user),
-                                      tools=TOOL_SCHEMAS, messages=messages, output_config={"effort": effort})
+                                      tools=toolbox.schemas() if hasattr(toolbox, "schemas") else TOOL_SCHEMAS,
+                                      messages=messages, output_config={"effort": effort})
         ans.turns += 1
         u = resp.usage
         ans.tokens["input"] += u.input_tokens

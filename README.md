@@ -14,7 +14,7 @@
 | 비용 | 문항당 Haiku $0.0016, Sonnet $0.0218 (Haiku의 약 14배) |
 | 권한 | 직원별 DB 역할 · 행 단위 보안 · 개인정보 열 권한. 우회 SQL까지 테스트로 막음 |
 | 출처 | 맞은 답의 99% 이상(Haiku 136/138, Sonnet 138/138)가 숫자에 쿼리 ID를 붙임 |
-| 테스트 | 141개 (오프라인 + Postgres 통합), GitHub Actions |
+| 테스트 | 146개 (오프라인 + Postgres 통합), GitHub Actions |
 
 ## 고객 문제 (가상)
 
