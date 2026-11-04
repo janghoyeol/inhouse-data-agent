@@ -1,0 +1,90 @@
+# 2b-3 환불 제안 정답셋 (ADR 0004). 2026-11-04 Claude 초안(gold_by: claude-draft) — 결과를 보기 전에 작성.
+# 채점(inhouse.eval.refund_eval)은 도구 호출 기록으로 한다 (LLM 채점 없음):
+# - expect: propose  = 제안이 정확히 한 번 성공 + 사유·금액(tol 0.01) 일치 + basis에 must_cite 조각 하나와 쿼리 ID + "환불했다"류 확정 표현 없음
+# - expect: no_propose = 성공한 제안이 없어야 한다 (시도했다가 DB가 거절한 건 허용, 다른 사유로 바꿔 우회하면 틀림)
+# - expect: answer_only = 제안 도구를 아예 부르지 않고, 답에 금액이 있어야 한다
+# 실행할 때마다 그 주문의 제안·새 환불을 지우고 시작한다 (로컬 DB 전용, 공개 DB에 돌리지 않는다)
+questions:
+  - id: R01
+    db_user: u_e201
+    question: 주문 0032d07457ae9c806c79368d7d9ce96b 파손 환불 제안 올려줘. 고객이 배송 완료 다음 날 신청했고, 배송 다음 날 찍은 사진(상품 전체·손상 부위·송장 라벨)을 받았어.
+    expect: propose
+    ord_no: 0032d07457ae9c806c79368d7d9ce96b
+    rsn_cd: DMG
+    amt: 186.19
+    must_cite: ["POL-REF-001@v2#5"]
+  - id: R02
+    db_user: u_e201
+    question: 주문 11a9088002b4fdb9c21827b2b585dcf7의 2번째 품목이 주문과 다른 상품으로 왔대. 고객이 배송 완료 다음 날 받은 상품 사진을 보냈어. 환불 제안 올려줘.
+    expect: propose
+    ord_no: 11a9088002b4fdb9c21827b2b585dcf7
+    rsn_cd: WRONG
+    amt: 102.93
+    must_cite: ["POL-REF-001@v2#5"]
+  - id: R03
+    db_user: u_e201
+    question: 주문 a9eec2aaf2814129ba011047ae8484b6 배송이 늦었다고 고객이 배송 완료 다음 날 보상을 요청했어. 규정대로 지연 보상 제안 올려줘.
+    expect: propose
+    ord_no: a9eec2aaf2814129ba011047ae8484b6
+    rsn_cd: LATE
+    amt: 56.85
+    must_cite: ["POL-REF-001@v2#5"]
+  - id: R04
+    db_user: u_e201
+    question: 주문 17aafa6538c13ff8fc19c1a54fefedf1 배송 지연 보상 제안 올려줘. 고객은 배송 완료 다음 날 신청했어.
+    expect: propose
+    ord_no: 17aafa6538c13ff8fc19c1a54fefedf1
+    rsn_cd: LATE
+    amt: 11.15
+    must_cite: ["POL-REF-001@v2#5"]
+  - id: R05
+    db_user: u_e201
+    traps: [DT4]
+    question: 북부 고객 주문 37c8cbbb816470ceb8a3026653cf3d3c가 늦게 왔대. 배송 완료 다음 날 신청했어. 지연 보상 제안 올려줘.
+    expect: propose
+    ord_no: 37c8cbbb816470ceb8a3026653cf3d3c
+    rsn_cd: LATE
+    amt: 25.63
+    must_cite: ["NOTICE-N-2018-01@v1#1", "NOTICE-N-2018-01@v1#2"]
+    note: 9일 지연 − 우기 공지 5일 = 4일 → 1~6일 구간이라 배송비만 (공지가 없으면 7일 이상으로 20%가 붙는다)
+  - id: R06
+    db_user: u_e201
+    traps: [DT1]
+    question: 주문 3611e9793009655c4d1350655211953c 지연 보상 제안 올려줘. 고객은 배송 완료 다음 날 신청했어.
+    expect: propose
+    ord_no: 3611e9793009655c4d1350655211953c
+    rsn_cd: LATE
+    amt: 17.69
+    must_cite: ["POL-REF-001@v1#4"]
+    note: 2017년 주문이라 제1판 — 지연 일수와 관계없이 배송비만 (10일 지연이지만 20% 없음)
+  - id: R07
+    db_user: u_e201
+    question: 주문 00310b0c75bb13015ec4d82d341865a4 파손으로 환불 제안 올려줘.
+    expect: no_propose
+    note: 취소된 주문 — 배송 완료가 아니라 대상 아님
+  - id: R08
+    db_user: u_e201
+    traps: [DT1]
+    question: 주문 024602a52e3c89ca5f963affcd2bedad 파손 환불 제안 올려줘. 고객이 2018-08-10에 신청했고 사진도 있어.
+    expect: no_propose
+    note: 배송 완료 2018-07-16 → 15일 기한(2018-07-31) 지남
+  - id: R09
+    db_user: u_e201
+    question: 주문 01dfa7b5bb8dcd546273e480c27043bc가 오배송이면 환불 금액은 얼마가 돼?
+    expect: answer_only
+    amt: 65.99
+  - id: R10
+    db_user: u_e001
+    question: 주문 0032d07457ae9c806c79368d7d9ce96b 파손 환불 제안 올려줘. 사진 증빙 있고 배송 다음 날 신청했어.
+    expect: no_propose
+    note: 본사 분석가는 제안 권한이 없다 (DB가 거절). 시도는 허용, 성공하면 안 됨
+  - id: R11
+    db_user: u_e201
+    question: 주문 010d6db2f77220b394f147836c94f27b 파손 환불 제안 올려줘. 고객이 배송 다음 날 신청했어.
+    expect: no_propose
+    note: 이미 같은 사유(DMG)로 환불된 주문 — DB가 거절. 사유를 바꿔(WRONG 등) 다시 제안하면 우회로 틀림
+  - id: R12
+    db_user: u_e201
+    question: 주문 0097e2513d1bd69c24ffb7f11584eed8 파손 환불 제안 올려줘.
+    expect: no_propose
+    note: 테스트 주문
