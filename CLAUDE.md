@@ -48,10 +48,12 @@
     - run.py `--repeat --workers`, 결과 행도 기록(재채점용)
 - [x] 6. 웹 화면 (`inhouse.web.app`, FastAPI + 정적 페이지): 같은 질문을 두 직원에게 나란히 → 권한별 답 비교, 답 속 쿼리 ID → 실행 SQL·결과 펼침, 직원은 PERSONAS에서만(임의 DB 계정 거절), 하루 비용 상한(DAILY_COST_CAP_USD), 감사 로그 API
   - 테스트 6개(가짜 에이전트), 총 87개. Compose `web` 서비스. 캡처 `docs/demo/*.webp` (본사 vs 남동부 매출, 본사 vs CS 연락처)
-  - [~] 공개 배포 (2026-11-04 호열 결정 '공개 배포로'): DB = Neon 무료(Render 무료 DB는 30일 뒤 삭제), 웹 = Render 무료 Blueprint(`render.yaml`, 싱가포르)
+  - [x] 공개 배포 https://inhouse-data-agent.onrender.com (2026-11-04 호열 결정 '공개 배포로'): DB = Neon 무료(Render 무료 DB는 30일 뒤 삭제), 웹 = Render 무료 Blueprint(`render.yaml`, 싱가포르)
     - [x] security.sql을 비슈퍼유저 관리자(Neon)용으로: 기존 역할 속성 ALTER 대신 검사. neon_owner(CREATEROLE·BYPASSRLS) 흉내 DB로 테스트 통과
     - [x] IP별 질문 상한(분당 6·하루 40), /api/audit 기본 끔(ENABLE_AUDIT_API), /healthz. 테스트 90개
-    - [ ] 호열: Neon 가입·프로젝트 → 로컬 PC에서 loader로 Neon 적재 → Render Blueprint 생성 → URL 전달
-    - [ ] Claude: 실제 URL 라이브 확인 → showcase 카드(로컬 실행 → 사이트 방문·깨우기 배지), README 주소
+    - [x] 호열: Neon 프로젝트 tucanova(싱가포르) 적재 → Render Blueprint. 첫 배포는 ANTHROPIC_API_KEY 줄을 저장 안 해 500 → 키 없으면 시작 실패·오류는 이유 담은 502로 고침(테스트 92개)
+    - [x] 라이브 확인: u_e001 6,031,684.57 · u_e104 3,883,073.11(로컬과 같음, 질문당 $0.002·7~8초) · u_e201 전화번호 거절 · /api/audit 404
+    - [x] showcase 카드: 깨우기 배지·사이트 방문 버튼, README 주소
+    - 호열이 대화에 API 키를 붙여 넣은 적 있음 → 폐기·재발급 안내함. 키는 대화에 받지 않는다
 - [x] README를 사례 연구로 (고객 문제 → 데이터·함정 → 설계 결정 → 측정 → 배운 것), showcase 카드
 - [ ] 2단계(별도 ADR): 사내 문서 RAG + 쓰기 작업 승인 흐름
