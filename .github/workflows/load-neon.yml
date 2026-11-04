@@ -1,0 +1,45 @@
+# 공개 데모 DB(Neon) 다시 적재. DB 구조·데이터가 바뀔 때만 손으로 실행한다 (Actions → load-neon → Run workflow).
+# 필요한 저장소 비밀값: NEON_DATABASE_URL(Neon 관리자 연결 문자열), TCN_USER_PASSWORD(Render와 같은 직원 비밀번호)
+# 기존 표를 지우고 새로 만든다 (약 1분, 그동안 공개 데모 질문은 실패할 수 있음).
+name: load-neon
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Neon의 표를 지우고 다시 적재합니다. 계속하려면 load 라고 입력"
+        required: true
+concurrency: load-neon
+jobs:
+  load:
+    if: github.event.inputs.confirm == 'load'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install .
+      - name: Olist 원본 내려받기 (해시 확인)
+        run: python -m inhouse.data.fetch --dir data/raw
+      - name: Neon에 적재
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          TCN_USER_PASSWORD: ${{ secrets.TCN_USER_PASSWORD }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "NEON_DATABASE_URL 비밀값이 없습니다"; exit 1; }
+          test -n "$TCN_USER_PASSWORD" || { echo "TCN_USER_PASSWORD 비밀값이 없습니다"; exit 1; }
+          python -m inhouse.data.load --raw data/raw
+      - name: 직원 역할로 확인 (문서·주문이 보이는지)
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          TCN_USER_PASSWORD: ${{ secrets.TCN_USER_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import os, psycopg
+          from psycopg.conninfo import make_conninfo
+          for u in ["u_e001", "u_e104", "u_e201"]:
+              with psycopg.connect(make_conninfo(os.environ["DATABASE_URL"], user=u, password=os.environ["TCN_USER_PASSWORD"])) as c:
+                  d, ch, o = c.execute("SELECT (SELECT count(*) FROM doc), (SELECT count(*) FROM doc_chunk), (SELECT count(*) FROM ord)").fetchone()
+                  print(f"{u}: 문서 {d} · 조각 {ch} · 주문 {o:,}")
+          PY
