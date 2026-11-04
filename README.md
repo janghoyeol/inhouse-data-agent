@@ -12,7 +12,7 @@
 | 비용 | 문항당 Haiku $0.0016, Sonnet $0.0218 (Haiku의 약 14배) |
 | 권한 | 직원별 DB 역할 · 행 단위 보안 · 개인정보 열 권한. 우회 SQL까지 테스트로 막음 |
 | 출처 | 맞은 답의 99% 이상(Haiku 136/138, Sonnet 138/138)가 숫자에 쿼리 ID를 붙임 |
-| 테스트 | 87개 (오프라인 + Postgres 통합), GitHub Actions |
+| 테스트 | 90개 (오프라인 + Postgres 통합), GitHub Actions |
 
 ## 고객 문제 (가상)
 
@@ -98,6 +98,18 @@ python -m unittest discover -s tests -t .                                  # 오
 TEST_DATABASE_URL=postgresql://.../빈DB python -m unittest discover -s tests -t .   # + 적재·권한·실행 통합 (별도 클러스터 권장)
 DATABASE_URL=... TCN_USER_PASSWORD=... ANTHROPIC_API_KEY=... python -m inhouse.eval.run --model claude-haiku-5-5 --repeat 3 --workers 4
 ```
+
+### 공개 데모 배포 (Neon + Render, 무료)
+
+Render 무료 DB는 30일 뒤 지워지므로 DB는 [Neon](https://neon.tech) 무료(0.5 GB, 이 데이터는 약 220 MB)에 두고, 웹만 Render에 올린다.
+Neon 관리자는 슈퍼유저가 아니어도 되게 권한 설정을 만들었다(CREATEROLE·BYPASSRLS 관리자로 통합 테스트 통과).
+
+1. Neon 프로젝트(Postgres 16, 싱가포르) → 연결 문자열(pooler 아님, `?sslmode=require`)
+2. 적재: `docker compose run --rm --no-deps -e DATABASE_URL="<Neon 주소>" -e TCN_USER_PASSWORD="<긴 임의 비밀번호>" loader`
+3. Render → New → Blueprint → 이 레포 ([render.yaml](render.yaml)) → `DATABASE_URL`·`TCN_USER_PASSWORD`·`ANTHROPIC_API_KEY` 입력
+
+공개 상태의 보호: 하루 Claude 비용 상한(`DAILY_COST_CAP_USD`), IP별 질문 수(`RATE_PER_MINUTE`·`RATE_PER_DAY`),
+감사 로그 API는 다른 방문자 질문이 보이므로 기본으로 끔(`ENABLE_AUDIT_API=1`일 때만). DB 쪽은 직원 역할이라 읽기 전용·권역 제한 그대로다.
 
 정답 SQL 쓸 때 옆에 띄우는 표·열 사전: [docs/db-map.html](docs/db-map.html) (`python scripts/build_db_map.py`로 DB에서 다시 만듦).
 
