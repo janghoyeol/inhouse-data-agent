@@ -99,4 +99,5 @@
 - [x] 이력서·포트폴리오 새로 (2026-11-04, 호열이 예전 함께 고치던 이력서를 잃어 기존 PDF 포트폴리오 19쪽 + showcase 기준으로 재작성, 목표 FDE·신입 AI 개발자)
   - 이력서(Claude Docs): https://claude.ai/artifact/5oshvkBQpVQV8nDq5RThn3 — 소개·핵심 역량 표·AI 에이전트 4개·이전 프로젝트 표·학력·자격·기술. 맨 끝 '바뀐 점' 절은 제출 전 지우기
   - 포트폴리오(Slides 14장): https://claude.ai/artifact/MdRs59Ys7peo4AFD3hbaDA — 표지·원칙·한눈에·inhouse 5장·MCP·trend·nsmc·백엔드·이력·마무리, 실제 캡처 6장
-  - 뺀 것: 백엔드 개발자 제목·해시태그, Named Things, 재미로 만든 것, 팀 프로젝트 상세, 생년월일·사진. 확인 필요: trend-agent·nsmc 기간, PR Guardian·TaskTriage·Realtime Board 링크
+  - 뺀 것: 백엔드 개발자 제목·해시태그, Named Things, 재미로 만든 것, 팀 프로젝트 상세, 생년월일·사진. trend-agent·nsmc 기간 = 2026.10(호열 확인, 반영함). 이전 백엔드 프로젝트는 데모 없음
+  - [ ] **다음 세션: 호열 피드백 '누가 봐도 AI로 만든 포폴 같다' → 같이 고치기.** 호열이 먼저 수정해 보고 옴. 방향 후보: 호열 말투로 다시 쓰기(짧은 문장·과장 없는 표현), 정형화된 '원칙 3가지·숫자 카드' 줄이기, 직접 겪은 장면(DBeaver 645, 정답 SQL 쓰며 막힌 곳) 넣기, 디자인을 기존 PDF 톤(밝은 파랑)과 맞출지 묻기. 정답을 먼저 주지 말고 호열이 고친 것부터 보기
