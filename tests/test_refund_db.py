@@ -176,6 +176,19 @@ class TestRefundFlow(unittest.TestCase):
         self.assertEqual(self.req(r)[0], "expired")
         self.assertEqual(self.n_rfnd(), self.base_rfnd)
 
+    def test_daily_reset_removes_only_demo_writes(self):
+        from inhouse.data import reset_demo
+        before = self.admin.execute("SELECT array_agg(rfnd_no ORDER BY rfnd_no) FROM rfnd").fetchone()[0]
+        done, pending = self.propose(amt="5.00"), self.propose(ord_no="o3", rsn="DMG", amt="1.00")
+        self.decide("u_e203", done)
+        self.assertEqual(self.n_rfnd(), self.base_rfnd + 1)
+        self.assertEqual(reset_demo.reset(DSN), {"requests": 2, "refunds": 1})
+        self.assertEqual(self.admin.execute("SELECT array_agg(rfnd_no ORDER BY rfnd_no) FROM rfnd").fetchone()[0], before)
+        self.assertEqual(self.admin.execute("SELECT count(*) FROM rfnd_req").fetchone()[0], 0)
+        r = self.propose(amt="5.00")   # 초기화 뒤에도 다시 제안·승인되고 번호가 이어진다
+        self.assertEqual(self.decide("u_e203", r), "executed")
+        self.assertEqual(reset_demo.reset(DSN), {"requests": 1, "refunds": 1})
+
     # ---- 우회 ----------------------------------------------------------------
     def test_no_direct_writes(self):
         r = self.propose()

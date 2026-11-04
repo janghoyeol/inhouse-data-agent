@@ -1,0 +1,24 @@
+# 공개 데모 매일 초기화 (2b-4): 방문자가 만든 환불 제안과 승인으로 생긴 환불 기록만 지운다 (원래 데이터는 그대로, 몇 초).
+# 비밀값: NEON_DATABASE_URL (load-neon과 같은 것). 매일 KST 04:07, 손으로도 실행 가능.
+name: reset-demo
+on:
+  schedule:
+    - cron: "7 19 * * *"
+  workflow_dispatch:
+concurrency: load-neon
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install .
+      - name: 제안·승인 환불 지우기
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "NEON_DATABASE_URL 비밀값이 없습니다"; exit 1; }
+          python -m inhouse.data.reset_demo

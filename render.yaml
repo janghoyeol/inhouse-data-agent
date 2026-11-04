@@ -30,3 +30,5 @@ services:
         value: "40"
       - key: AUDIT_PATH
         value: /tmp/audit.jsonl
+      - key: ENABLE_APPROVALS    # 환불 제안·승인 공개 (가상 DB에만 기록, 매일 초기화: .github/workflows/reset-demo.yml)
+        value: "1"
