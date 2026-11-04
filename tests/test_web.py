@@ -109,6 +109,16 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(r.status_code, 502)
         self.assertIn("인증", r.json()["detail"])
 
+    def test_credit_error_is_explained(self):
+        class BadRequestError(Exception):
+            pass
+
+        def broke(db_user, question):
+            raise BadRequestError("Error code: 400 - Your credit balance is too low to access the Anthropic API.")
+        r = TestClient(create_app(ask_fn=broke, cost_cap_usd=1.0)).post("/api/ask", json={"db_user": "u_e001", "question": "q"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("크레딧", r.json()["detail"])
+
     def test_missing_api_key_fails_at_startup(self):
         import os
         from unittest import mock

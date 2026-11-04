@@ -200,7 +200,9 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
             import logging
             logging.getLogger("inhouse.web").exception("ask failed")
             name = type(e).__name__
-            msg = ("Claude API 인증에 실패했습니다 (서버 설정 문제)." if "Authentication" in name or "Permission" in name
+            msg = ("Claude API 크레딧이 부족해 지금은 답할 수 없습니다 (운영자가 충전해야 합니다)."
+                   if "credit balance" in str(e).lower()
+                   else "Claude API 인증에 실패했습니다 (서버 설정 문제)." if "Authentication" in name or "Permission" in name
                    else "Claude API가 혼잡하거나 사용량 한도에 걸렸습니다. 잠시 뒤 다시 시도해 주세요." if name in
                    ("RateLimitError", "OverloadedError", "InternalServerError", "APIConnectionError", "APITimeoutError")
                    else f"답을 만드는 중 오류가 났습니다 ({name}).")
