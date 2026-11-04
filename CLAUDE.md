@@ -59,7 +59,7 @@
 - [~] 2단계 ADR 0004 채택 (2026-11-04, 결정 6개 추천안대로): CS 환불 처리 한 흐름 = 문서 검색(2a) → 환불 제안·사람 승인(2b)
   - 가상 문서 약 30개(함정: 개정 전후·충돌·권한 밖·동의어) · Postgres 키워드 검색(2글자, 측정 후 임베딩) · 문서 조각도 RLS · 인용 문장·시행일 코드 검증 · 에이전트는 propose_refund만, 승인은 사람
   - [x] 2a-1 (2026-11-04): customer-brief 2단계 절(CS 팀장 Renata Oliveira) · 문서 30개 `src/inhouse/data/docs/*.md`(머리말 doc_id·version·status·effective·audience) · 함정 DT1~DT12 `docs/doc-notes.md`
-    - 규정 숫자 초안(호열 검토 대기): 환불 기한 v1 7일(2016-09~2017 주문)·v2 15일(2018~ 주문)·v3 초안 30일 · LATE 1~6일 배송비, 7일+ 배송비+20% · 승인 한도 v1 300/1,500 · v2(2018-07~ 승인일) CS팀장 500·권역 2,000·본사 무제한 · 72시간 만료
+    - 규정 숫자 (2026-11-04 호열 확정, 초안대로): 환불 기한 v1 7일(2016-09~2017 주문)·v2 15일(2018~ 주문)·v3 초안 30일 · LATE 1~6일 배송비, 7일+ 배송비+20% · 승인 한도 v1 300/1,500 · v2(2018-07~ 승인일) CS팀장 500·권역 2,000·본사 무제한 · 72시간 만료
     - 열람: tag all·cs·mgr·hq·rgn:XX·hr. u_e001 27 · 권역 16~18 · CS 22 (판 기준)
   - [x] 2a-2 (2026-11-04): `inhouse.data.docs`(머리말 파싱·## 절 조각·머리말 조각 #0·한국어 2글자 토큰 → tsvector 문자열 직접) · 표 doc/doc_chunk(GIN) · `tcn_doc_tags()`(session_user, SECURITY DEFINER) + RLS(doc: audience && 태그, 조각: doc 따라감) · load에 문서 적재
     - 테스트 14개 추가(오프라인 7 + DB 7: 직원 8명 보이는 문서 = 머리말로 따로 계산한 값, HR 아무도 못 봄, 우회 SET ROLE·set_config·row_security off·쓰기·pg_stats, 매핑 없는 계정 0), 총 106개. 슈퍼유저·Neon 흉내 둘 다 통과
