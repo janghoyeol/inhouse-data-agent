@@ -41,7 +41,8 @@
   - [x] D·E 17개 작성 완료 (2026-11-03) → 정답셋 50문항 중 결과형 47개 정답 SQL 다 채움
   - [~] 연습 문제 `eval/practice.yaml` (정답셋과 별개, 정답 포함): 1차 P01~P05 비율·평균·나눗셈 (2026-11-03 출제)
     진행: P01 97.26 ✅(취소 포함 분모 판단 정확) · P02 1.14 ✅(주문별 group by → avg, 첫 시도는 avg(item_seq)·기간 복붙 실수) — 다음은 P03(avg·order by)부터
-  - [ ] 호열: A·B·C 초안 30개 검토
+  - [x] A·B·C 초안 30개 Claude 교차 검산 (2026-11-04, 호열 요청 '초안 검토는 일단 너가'): `scripts/crosscheck_drafts.py` 다른 모양 SQL로 30/30 일치(UTC·KST 접속 둘 다), 순위 경계 확인, B05 3위가 팬아웃 시 바뀜 → 주석. `reviewed: crosscheck`, `eval/REVIEW.md`
+  - [ ] (선택) 호열: A·B·C 초안 사람 검토 → 끝나면 gold_by 표시 변경
   - [x] 정식 측정 (2026-11-04, 50문항×3회, effort medium): Haiku 5.5 147/150(98%) $0.0016/문항 · Sonnet 5.5 147/150(98%) $0.0218/문항 → 기본 Haiku (`eval/RESULTS.md`)
     - 실패 8건 모두 읽음: 채점 규칙 2(D09 부호 → abs, E07 꼬리표 열 → 한 줄 정답은 숫자만, `inhouse.eval.regrade`로 재채점) · 질문 애매 3(Sonnet B05 '미분류' → 측정 후 질문 수정) · 출처 원칙 위반 3(Haiku B05·D03, 틀림 유지)
     - run.py `--repeat --workers`, 결과 행도 기록(재채점용)

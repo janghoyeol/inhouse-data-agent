@@ -9,7 +9,8 @@
 # 함정 번호: T1 테스트 주문, T2 UTC/현지 날짜, T3 cust_no vs cust_uid, T4 상태 코드, T5 환불,
 # T6 구 요약표(천 헤알), T7 결제 ≠ 품목, T8 카테고리 결측·미번역, T9 리뷰 중복, T10 좌표 중복,
 # T11 탈퇴 고객, T12 약어 열, T13 SELECT * 거절, T14 권역 범위
-# gold_by: hoyeol = 호열 작성, together = 같이 작성, claude-draft = Claude 초안(호열 검토 필요)
+# gold_by: hoyeol = 호열 작성, together = 같이 작성, claude-draft = Claude 초안
+# reviewed: crosscheck = 다른 방식의 SQL로 다시 계산해 값 일치 확인 (scripts/crosscheck_drafts.py, eval/REVIEW.md). 사람 검토는 아님
 
 questions:
 
@@ -21,6 +22,7 @@ questions:
     checks: [T8]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(DISTINCT ctgr_cd) FROM prd
   - id: A02
@@ -30,6 +32,7 @@ questions:
     checks: []
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(*) FROM slr
   - id: A03
@@ -39,6 +42,7 @@ questions:
     checks: [T1, T4]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT s.stat_nm, count(*)
       FROM ord o JOIN cd_ord_stat s USING (stat_cd)
@@ -52,6 +56,7 @@ questions:
     expect: result
     compare: {order_matters: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT p.pay_mthd, count(*) AS n
       FROM ord_pay p JOIN ord o USING (ord_no)
@@ -65,6 +70,7 @@ questions:
     checks: [T12]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT max(p.inst_cnt) FROM ord_pay p JOIN ord o USING (ord_no) WHERE NOT o.is_test
   - id: A06
@@ -74,6 +80,7 @@ questions:
     checks: []
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT max(wt_g) FROM prd
   - id: A07
@@ -83,6 +90,7 @@ questions:
     checks: []
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(*) FROM slr WHERE uf = 'SP'
   - id: A08
@@ -92,6 +100,7 @@ questions:
     checks: [T12]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(avg(p.inst_cnt), 2)
       FROM ord_pay p JOIN ord o USING (ord_no)
@@ -103,6 +112,7 @@ questions:
     checks: [T12]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT rsn_cd, count(*) FROM rfnd GROUP BY rsn_cd
   - id: A10
@@ -112,6 +122,7 @@ questions:
     checks: [order_count, T2]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(*) AS order_count FROM ord
       WHERE NOT is_test AND stat_cd NOT IN (90, 91)
@@ -127,6 +138,7 @@ questions:
     expect: result
     compare: {order_matters: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT coalesce(c.ctgr_nm_en, p.ctgr_cd, '미분류') AS category, sum(i.sale_amt) AS sales
       FROM ord o
@@ -146,6 +158,7 @@ questions:
     checks: [order_count, T14]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT r.rgn_nm_ko, count(*)
       FROM ord o
@@ -164,6 +177,7 @@ questions:
     expect: result
     compare: {order_matters: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT s.uf, sum(i.sale_amt) AS sales
       FROM ord o
@@ -183,6 +197,7 @@ questions:
     expect: result
     compare: {order_matters: true, rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT cu.uf,
              round(100.0 * count(*) FILTER (WHERE (o.dlv_cust_dtm AT TIME ZONE 'America/Sao_Paulo')::date > o.est_dlv_dt)
@@ -203,6 +218,7 @@ questions:
     expect: result
     compare: {order_matters: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH last AS (   -- 주문당 최신 리뷰 1건 (avg_review_score 정의)
         SELECT DISTINCT ON (r.ord_no) r.ord_no, r.score
@@ -210,6 +226,7 @@ questions:
         WHERE NOT o.is_test
         ORDER BY r.ord_no, r.ans_dtm DESC NULLS LAST, r.rvw_sn DESC
       ), oc AS (       -- 주문 × 카테고리 (같은 주문의 같은 카테고리 품목은 한 번)
+        -- 품목 단위로 조인하면 리뷰 하나가 품목 수만큼 불어나 3위가 furniture_decor로 바뀐다 (eval/REVIEW.md)
         SELECT DISTINCT i.ord_no, coalesce(c.ctgr_nm_en, p.ctgr_cd) AS category
         FROM ord_item i JOIN prd p USING (prd_id) LEFT JOIN ctgr c ON c.ctgr_cd = p.ctgr_cd
         WHERE p.ctgr_cd IS NOT NULL   -- 카테고리 없는 상품은 카테고리 순위에서 뺀다
@@ -228,6 +245,7 @@ questions:
     expect: result
     compare: {order_matters: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH v AS (
         SELECT o.ord_no, to_char(o.ord_dtm AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') AS ym
@@ -247,6 +265,7 @@ questions:
     checks: []
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT max(n) FROM (
         SELECT i.ord_no, count(*) AS n FROM ord_item i JOIN ord o USING (ord_no) WHERE NOT o.is_test GROUP BY i.ord_no
@@ -258,6 +277,7 @@ questions:
     checks: [T7, T4]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(*) FROM ord o
       WHERE NOT o.is_test AND o.stat_cd NOT IN (90, 91)
@@ -271,6 +291,7 @@ questions:
     checks: [T8, T2]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT sum(i.sale_amt)
       FROM ord o
@@ -289,6 +310,7 @@ questions:
     expect: result
     compare: {rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(100.0 * count(*) FILTER (WHERE cu.uf = s.uf) / count(*), 2)
       FROM ord o
@@ -307,6 +329,7 @@ questions:
     checks: [net_sales]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH v AS (
         SELECT ord_no FROM ord
@@ -323,6 +346,7 @@ questions:
     checks: [customer_count, T3]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT count(DISTINCT c.cust_uid) AS customer_count
       FROM ord o JOIN cust c USING (cust_no)
@@ -337,6 +361,7 @@ questions:
     expect: result
     compare: {rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH per AS (
         SELECT c.cust_uid, count(*) AS n
@@ -354,6 +379,7 @@ questions:
     checks: [aov]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH v AS (
         SELECT ord_no FROM ord
@@ -371,6 +397,7 @@ questions:
     expect: result
     compare: {rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(100.0 * count(*) FILTER (WHERE stat_cd IN (90, 91)) / nullif(count(*), 0), 2) AS cancel_rate_pct
       FROM ord
@@ -385,6 +412,7 @@ questions:
     expect: result
     compare: {rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(100.0 * count(*) FILTER (WHERE EXISTS (
                SELECT 1 FROM rfnd r WHERE r.ord_no = o.ord_no AND r.rsn_cd <> 'CNCL'))
@@ -400,6 +428,7 @@ questions:
     checks: [avg_delivery_days]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(avg(extract(epoch FROM dlv_cust_dtm - ord_dtm) / 86400)::numeric, 2) AS avg_delivery_days
       FROM ord
@@ -414,6 +443,7 @@ questions:
     expect: result
     compare: {rate: true}
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(100.0 * count(*) FILTER (
                WHERE (dlv_cust_dtm AT TIME ZONE 'America/Sao_Paulo')::date > est_dlv_dt)
@@ -429,6 +459,7 @@ questions:
     checks: [avg_review_score, T9]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       WITH last AS (
         SELECT DISTINCT ON (r.ord_no) r.ord_no, r.score
@@ -446,6 +477,7 @@ questions:
     checks: [gmv]
     expect: result
     gold_by: claude-draft
+    reviewed: crosscheck
     gold_sql: |
       SELECT round(coalesce(sum(i.sale_amt + i.dlv_fee), 0), 2) AS gmv
       FROM ord o JOIN ord_item i USING (ord_no)
