@@ -24,6 +24,11 @@ class TestCitations(unittest.TestCase):
         self.assertEqual([(c.chunk_id, c.quote) for c in cs],
                          [("POL-REF-001@v2#3", "다음 날부터 15일 이내"), ("POL-REF-001@v3#1", None)])
         self.assertEqual(citations.parse("쿼리 [q-20261104-0000abcd] 만 있음"), [])
+        inner = citations.parse('[GUIDE-CS-001@v1#2 "고객이 \\"반품\\"이라고 해도"] 끝')
+        self.assertEqual(inner[0].quote, '고객이 \\"반품\\"이라고 해도')
+        self.assertTrue(citations.quote_in(inner[0].quote, '고객이 "반품"이라고 해도 사유가'))
+        rev = citations.parse('한도 ["CS 팀장 | R$ 300 이하" POL-APR-001@v1#2]')
+        self.assertEqual([(c.chunk_id, c.quote) for c in rev], [("POL-APR-001@v1#2", "CS 팀장 | R$ 300 이하")])
 
     def test_quote_found_ignoring_markdown_and_spaces(self):
         r = self.check('[POL-REF-001@v2#3 “다음 날부터  15일 이내에 환불을”]')[0]

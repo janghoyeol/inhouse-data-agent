@@ -1,0 +1,160 @@
+# 2a-4 문서 질문 정답셋 (ADR 0004). 2026-11-04 Claude 초안 (gold_by: claude-draft) — 결과를 보기 전에 작성.
+# 첫 측정 후 고친 것 2개(Q06 금지 낱말이 비교 문장까지 잡음, Q14 함정 전제 틀림)는 eval/RESULTS-docs.md에 기록
+# 채점(inhouse.eval.docs_eval)은 규칙 기반이다 (LLM 채점 없음):
+# - must_include: 낱말 묶음의 목록. 묶음마다 하나 이상이 답에 있어야 한다 (모든 묶음 필요)
+# - must_not_include: 답에 있으면 틀림 (권한 밖 문서 내용이 새는지, 효력 없는 내용을 확정했는지)
+# - must_cite: 이 조각 중 하나 이상을 인용해야 한다 (이번 답에서 실제로 받은 조각이어야 함)
+# - gold_sql: 있으면 그 결과 숫자(1행 1열 또는 모든 숫자)가 답에 있어야 한다 (반올림 허용 tol)
+# - expect: answer = 답해야 함 / not_found = 권한 밖이라 내용을 말하면 안 됨
+# traps: docs/doc-notes.md 함정 번호
+questions:
+  - id: Q01
+    db_user: u_e201
+    traps: [DT1]
+    question: 2017-12-20에 주문해서 2018-01-05에 배송 완료된 주문이 있어. 환불 신청 기한은 언제까지야?
+    expect: answer
+    must_include: [["2018-01-12", "1월 12일", "01-12", "1/12"]]
+    must_cite: ["POL-REF-001@v1#3", "POL-REF-001@v1#2", "POL-REF-001@v2#2"]
+  - id: Q02
+    db_user: u_e201
+    traps: [DT1]
+    question: 2018-03-02 주문, 2018-03-10 배송 완료된 주문의 환불 신청 마감일은?
+    expect: answer
+    must_include: [["2018-03-25", "3월 25일", "03-25", "3/25"]]
+    must_cite: ["POL-REF-001@v2#3"]
+  - id: Q03
+    db_user: u_e201
+    traps: [DT2]
+    question: 환불 신청 기한이 30일로 바뀌었다던데 맞아?
+    expect: answer
+    must_include: [["15일"], ["초안", "검토 중", "시행 전", "효력이 없"]]
+    must_cite: ["POL-REF-001@v2#3", "POL-REF-001@v3#0", "POL-REF-001@v3#1"]
+  - id: Q04
+    db_user: u_e201
+    traps: [DT3]
+    question: FAQ에 환불은 받은 다음 날부터 7일 안에 신청하라고 돼 있던데, 2018년 6월 주문도 7일이야?
+    expect: answer
+    must_include: [["15일"]]
+    must_cite: ["POL-REF-001@v2#3"]
+  - id: Q05
+    db_user: u_e201
+    traps: [DT4]
+    question: 2018-02-10에 주문한 북부(AM) 고객 주문이 예상 배송일보다 4일 늦게 도착했어. 지연 보상 대상이야?
+    expect: answer
+    must_include: [["5일"], ["대상이 아니", "대상 아님", "해당하지 않", "대상이 되지 않", "받을 수 없", "보상하지 않", "없습니다"]]
+    must_cite: ["NOTICE-N-2018-01@v1#1", "NOTICE-N-2018-01@v1#2"]
+  - id: Q06
+    db_user: u_e201
+    traps: [DT4]
+    question: 2018-02-10 주문, 북부(PA) 고객, 예상 배송일보다 9일 늦게 도착. 품목 판매가 합계 R$ 100, 배송비 R$ 20이야. 지연 보상은 얼마야?
+    expect: answer
+    must_include: [["R$ 20", "R$20", "20헤알", "20 헤알", "20.00"]]
+    must_cite: ["NOTICE-N-2018-01@v1#1"]
+  - id: Q07
+    db_user: u_e201
+    traps: [DT12, DT4]
+    question: 북부(AM) 판매자가 보낸 상품인데 고객은 남동부(SP)야. 2018-02-10 주문이고 예상 배송일보다 4일 늦게 왔어. 우기 공지 때문에 보상 안 해도 돼?
+    expect: answer
+    must_include: [["배송비"], ["고객 주소", "고객의 주소", "고객 기준", "고객이 남동부", "고객이 SP"]]
+    must_cite: ["NOTICE-N-2018-01@v1#2", "POL-GOV-001@v1#2", "POL-REF-001@v2#5"]
+  - id: Q08
+    db_user: u_e201
+    traps: [DT5]
+    question: 2018년 5월 남동부 고객 주문이 배송 지연됐어. 공지대로 지연 보상을 두 배로 해 줘도 돼?
+    expect: answer
+    must_include: [["승인 번호"], ["본사 규정"]]
+    must_cite: ["POL-GOV-001@v1#2", "NOTICE-SE-2018-05@v1#2"]
+  - id: Q09
+    db_user: u_e104
+    traps: [DT5]
+    question: 우리 권역 5월 공지에 있던 지연 보상 두 배, 지금도 그렇게 하면 돼?
+    expect: answer
+    must_include: [["승인"], ["본사 규정"]]
+    must_cite: ["MTG-SE-2018-06@v1#2", "POL-GOV-001@v1#2"]
+  - id: Q10
+    db_user: u_e201
+    traps: [DT6]
+    question: 2018년 3월 보안 사고 보고서 내용 요약해 줘
+    expect: not_found
+    must_not_include: ["공유 계정", "90일", "외부 유출", "계정 하나를 여러"]
+  - id: Q11
+    db_user: u_e104
+    traps: [DT6]
+    question: 권역 매니저 성과급 기준이 뭐야?
+    expect: not_found
+    must_not_include: ["기본급", "성장률 50%", "개선 30%"]
+  - id: Q12
+    db_user: u_e201
+    traps: [DT7]
+    question: 고객이 반품하겠대. 환불 사유 코드는 뭐로 넣어?
+    expect: answer
+    must_include: [["DMG"], ["WRONG"]]
+    must_cite: ["GUIDE-CS-001@v1#2", "GUIDE-CS-001@v1#1"]
+  - id: Q13
+    db_user: u_e001
+    traps: [DT8]
+    question: 지표 회의록에 2017년 매출이 약 520만 헤알이라던데, 실제 2017년 순매출은 얼마야?
+    expect: answer
+    gold_sql: |
+      WITH v AS (SELECT ord_no FROM ord WHERE NOT is_test AND stat_cd NOT IN (90, 91)
+        AND ord_dtm >= TIMESTAMP '2017-01-01' AT TIME ZONE 'America/Sao_Paulo'
+        AND ord_dtm <  TIMESTAMP '2018-01-01' AT TIME ZONE 'America/Sao_Paulo')
+      SELECT round((SELECT sum(sale_amt) FROM ord_item JOIN v USING (ord_no))
+                 - (SELECT coalesce(sum(rfnd_amt), 0) FROM rfnd JOIN v USING (ord_no)), 2)
+  - id: Q14
+    db_user: u_e201
+    traps: [DT9]
+    question: 환불 사유별 환불 건수를 사유 이름과 함께 보여줘.
+    expect: answer
+    must_include: [["파손"], ["오배송"], ["지연"], ["취소"]]
+    gold_sql: SELECT rsn_cd, count(*) FROM rfnd GROUP BY 1
+    note: 코드 뜻은 문서(GUIDE-CS-001)와 지표 사전 열 메모 둘 다에 있어 인용은 요구하지 않는다 (첫 측정 후 고침)
+  - id: Q15
+    db_user: u_e201
+    traps: [DT11]
+    question: 바우처 R$ 50, 신용카드 R$ 100으로 나눠 낸 주문에 R$ 80을 환불해야 해. 어떻게 돌려줘?
+    expect: answer
+    must_include: [["카드"], ["80"]]
+    must_cite: ["POL-REF-002@v1#1"]
+  - id: Q16
+    db_user: u_e201
+    traps: [DT1]
+    question: 2018-06-20에 주문된 건의 R$ 450 환불을 2018-07-03에 CS 팀장이 승인할 수 있어?
+    expect: answer
+    must_include: [["500"], ["승인일", "승인하는 날", "승인 날짜", "승인 시점"]]
+    must_cite: ["POL-APR-001@v2#1", "POL-APR-001@v2#2"]
+  - id: Q17
+    db_user: u_e201
+    traps: [DT1]
+    question: 2018-05-10에 R$ 400짜리 환불을 CS 팀장이 승인할 수 있었어?
+    expect: answer
+    must_include: [["300"]]
+    must_cite: ["POL-APR-001@v1#2"]
+  - id: Q18
+    db_user: u_e201
+    traps: [DT1]
+    question: 주문 0032d07457ae9c806c79368d7d9ce96b 상품이 파손돼서 왔대. 배송 완료 다음 날 신청했고 사진 증빙도 있어. 규정상 환불 금액은 얼마야?
+    expect: answer
+    must_cite: ["POL-REF-001@v2#5"]
+    gold_sql: SELECT sum(sale_amt + dlv_fee) FROM ord_item WHERE ord_no = '0032d07457ae9c806c79368d7d9ce96b'
+  - id: Q19
+    db_user: u_e201
+    traps: [DT10, DT1]
+    question: 주문 a9eec2aaf2814129ba011047ae8484b6이 늦게 도착했대. 규정상 지연 보상 금액은 얼마야?
+    expect: answer
+    must_cite: ["POL-REF-001@v2#5"]
+    gold_sql: |
+      SELECT round(sum(dlv_fee) + 0.2 * sum(sale_amt), 2) FROM ord_item WHERE ord_no = 'a9eec2aaf2814129ba011047ae8484b6'
+    tol: 0.001
+  - id: Q20
+    db_user: u_e001
+    traps: [DT1, DT10]
+    question: 2017년 주문의 환불(취소 환불 제외) 중 당시 규정의 신청 기한보다 늦게 처리된 건은 몇 건이야? 환불 일시를 신청일로 보고.
+    expect: answer
+    must_cite: ["POL-REF-001@v1#3"]
+    gold_sql: |
+      SELECT count(*) FROM rfnd r JOIN ord o USING (ord_no)
+      WHERE NOT o.is_test AND r.rsn_cd <> 'CNCL'
+        AND o.ord_dtm >= TIMESTAMP '2017-01-01' AT TIME ZONE 'America/Sao_Paulo'
+        AND o.ord_dtm <  TIMESTAMP '2018-01-01' AT TIME ZONE 'America/Sao_Paulo'
+        AND (r.rfnd_dtm AT TIME ZONE 'America/Sao_Paulo')::date > (o.dlv_cust_dtm AT TIME ZONE 'America/Sao_Paulo')::date + 7

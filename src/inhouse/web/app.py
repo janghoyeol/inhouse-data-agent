@@ -110,6 +110,13 @@ def _call_view(call) -> dict[str, Any]:
                     error=r.get("error") or None, columns=r.get("columns", []),
                     rows=r.get("rows", [])[:MAX_ROWS_SHOWN], row_count=r.get("row_count", 0),
                     truncated=bool(r.get("truncated")) or r.get("row_count", 0) > MAX_ROWS_SHOWN)
+    elif call.name in ("search_docs", "read_doc"):
+        keep = ("chunk_id", "doc_id", "version", "title", "status", "eff_from", "eff_to", "approval_no", "heading",
+                "content")
+        hits = r.get("results") if call.name == "search_docs" else [
+            {**r.get("doc", {}), **c} for c in r.get("chunks", [])]
+        view.update(input=call.input, error=r.get("error"),
+                    chunks=[{k: h.get(k) for k in keep} for h in (hits or [])])
     else:
         view["input"] = call.input
     return view

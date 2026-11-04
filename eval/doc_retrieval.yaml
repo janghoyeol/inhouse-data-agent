@@ -1,0 +1,38 @@
+# 2a-4 문서 검색 정답셋 (ADR 0004): 질문 → 정답 조각. 정답 조각 중 하나라도 상위 5개 안에 있으면 맞음(재현율@5).
+# 결과를 보기 전에 작성했다 (2026-11-04, claude-draft). kind: direct = 문서와 같은 낱말, paraphrase = 다른 말로 물음
+# 검색은 묻는 직원 권한으로 돈다 → 정답 조각은 그 직원에게 보이는 조각이어야 한다 (retrieval.py가 확인)
+items:
+  - {id: R01, db_user: u_e201, kind: direct, query: "환불 신청 기한이 며칠이야?", relevant: ["POL-REF-001@v2#3"]}
+  - {id: R02, db_user: u_e201, kind: paraphrase, query: "물건 받고 나서 며칠 안에 돈 돌려받을 수 있어?", relevant: ["POL-REF-001@v2#3", "POL-REF-001@v1#3"]}
+  - {id: R03, db_user: u_e201, kind: paraphrase, query: "반품 기간 알려줘", relevant: ["POL-REF-001@v2#3", "POL-REF-001@v1#3", "FAQ-CS-001@v1#2"]}
+  - {id: R04, db_user: u_e201, kind: direct, query: "파손된 상품은 얼마나 환불해 줘?", relevant: ["POL-REF-001@v2#5"]}
+  - {id: R05, db_user: u_e201, kind: paraphrase, query: "배송이 일주일 넘게 늦으면 보상이 어떻게 돼?", relevant: ["POL-REF-001@v2#5"]}
+  - {id: R06, db_user: u_e201, kind: paraphrase, query: "깨진 물건 사진은 언제까지 찍어야 해?", relevant: ["GUIDE-CS-004@v1#2"]}
+  - {id: R07, db_user: u_e201, kind: paraphrase, query: "주문이랑 다른 상품이 왔을 때 증빙이 필요해?", relevant: ["GUIDE-CS-004@v1#1"]}
+  - {id: R08, db_user: u_e201, kind: direct, query: "바우처로 결제한 주문 환불은 어떻게 돌려줘?", relevant: ["POL-REF-002@v1#2", "POL-REF-002@v1#1", "FAQ-CS-001@v1#3"]}
+  - {id: R09, db_user: u_e201, kind: direct, query: "무통장 입금표로 낸 건 환불이 얼마나 걸려?", relevant: ["POL-REF-002@v1#2"]}
+  - {id: R10, db_user: u_e201, kind: direct, query: "할부로 산 건 환불하면 남은 할부는 어떻게 돼?", relevant: ["POL-REF-002@v1#3", "POL-REF-002@v1#2"]}
+  - {id: R11, db_user: u_e201, kind: direct, query: "CS 팀장이 승인할 수 있는 최대 금액은?", relevant: ["POL-APR-001@v2#2", "POL-APR-001@v1#2"]}
+  - {id: R12, db_user: u_e201, kind: paraphrase, query: "환불 제안했는데 아무도 승인 안 하면 어떻게 돼?", relevant: ["POL-APR-001@v2#3"]}
+  - {id: R13, db_user: u_e201, kind: paraphrase, query: "내가 올린 환불을 내가 승인해도 돼?", relevant: ["POL-APR-001@v2#3", "POL-APR-001@v1#3"]}
+  - {id: R14, db_user: u_e201, kind: direct, query: "LATE 코드는 무슨 뜻이야?", relevant: ["GUIDE-CS-001@v1#1"]}
+  - {id: R15, db_user: u_e201, kind: paraphrase, query: "반품은 사유 코드 뭐로 넣어?", relevant: ["GUIDE-CS-001@v1#2", "GUIDE-CS-001@v1#1"]}
+  - {id: R16, db_user: u_e201, kind: paraphrase, query: "주문 취소로 돌려준 돈을 매출에서 또 빼야 해?", relevant: ["GUIDE-CS-001@v1#2"]}
+  - {id: R17, db_user: u_e201, kind: direct, query: "배송 지연은 어떻게 판단해? 예상일 당일에 도착하면?", relevant: ["POL-DLV-001@v1#2"]}
+  - {id: R18, db_user: u_e201, kind: direct, query: "북부 우기 배송 지연 보상 기준", relevant: ["NOTICE-N-2018-01@v1#1", "NOTICE-N-2018-01@v1#2"]}
+  - {id: R19, db_user: u_e201, kind: direct, query: "블랙프라이데이 주문 환불 기한 연장됐어?", relevant: ["NOTICE-NE-2017-11@v1#1"]}
+  - {id: R20, db_user: u_e201, kind: direct, query: "남동부 물류센터 이전 때 지연 보상 두 배 맞아?", relevant: ["NOTICE-SE-2018-05@v1#2"]}
+  - {id: R21, db_user: u_e201, kind: direct, query: "권역 공지랑 본사 규정이 다르면 뭘 따라야 해?", relevant: ["POL-GOV-001@v1#2"]}
+  - {id: R22, db_user: u_e201, kind: paraphrase, query: "아직 확정 안 된 개정안을 고객 안내에 써도 돼?", relevant: ["POL-GOV-001@v1#1", "POL-REF-001@v3#0"]}
+  - {id: R23, db_user: u_e201, kind: paraphrase, query: "고객이 자기 전화번호 전체를 알려달라고 하면?", relevant: ["POL-SEC-001@v1#3", "POL-SEC-001@v1#2", "GUIDE-CS-003@v1#3"]}
+  - {id: R24, db_user: u_e201, kind: paraphrase, query: "승인 나기 전에 고객한테 환불 된다고 말해도 돼?", relevant: ["GUIDE-CS-002@v1#2", "GUIDE-CS-003@v1#2"]}
+  - {id: R25, db_user: u_e201, kind: direct, query: "남부 배송사 바뀌었어?", relevant: ["NOTICE-S-2018-03@v1#1"]}
+  - {id: R26, db_user: u_e104, kind: direct, query: "권역 매니저는 어떤 환불을 승인할 수 있어?", relevant: ["GUIDE-MGR-001@v1#1", "POL-APR-001@v2#2"]}
+  - {id: R27, db_user: u_e104, kind: direct, query: "물류센터 이전 회의에서 보상 두 배는 어떻게 결론 났어?", relevant: ["MTG-SE-2018-06@v1#2"]}
+  - {id: R28, db_user: u_e104, kind: paraphrase, query: "매출 셀 때 배송비도 넣어?", relevant: ["MTG-DATA-2017-12@v1#2"]}
+  - {id: R29, db_user: u_e001, kind: paraphrase, query: "가짜 주문은 왜 지우지 않고 남겨 둬?", relevant: ["MTG-DATA-2018-02@v1#2"]}
+  - {id: R30, db_user: u_e001, kind: direct, query: "2018년 3월 보안 사고 조치 내용", relevant: ["RPT-SEC-2018-03@v1#2"]}
+  - {id: R31, db_user: u_e102, kind: direct, query: "마라냥 배송 지연 회의 결정 사항", relevant: ["MTG-NE-2018-02@v1#2"]}
+  - {id: R32, db_user: u_e201, kind: paraphrase, query: "깨진 상품 환불 비용은 누가 내?", relevant: ["POL-SLR-001@v1#1"]}
+  - {id: R33, db_user: u_e201, kind: direct, query: "CS 팀장 이름이 뭐야?", relevant: ["ORG-001@v1#1"]}
+  - {id: R34, db_user: u_e201, kind: direct, query: "유효 주문이 뭐야?", relevant: ["GLOSSARY-001@v1#1"]}

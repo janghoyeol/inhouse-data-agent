@@ -1,0 +1,15 @@
+# 확인용 검색 정답셋 (2026-11-04): 동의어 사전을 만들기 전에 작성했고, 사전은 이 파일을 보지 않고 문서 낱말로만 만들었다.
+# 사전이 doc_retrieval.yaml에만 맞춘 것인지 보려고 따로 둔다. 전부 다른 말로 묻는 질문(paraphrase)
+items:
+  - {id: H01, db_user: u_e201, kind: paraphrase, query: "택배가 너무 늦게 왔는데 배송비 돌려줘?", relevant: ["POL-REF-001@v2#5", "POL-REF-001@v1#4"]}
+  - {id: H02, db_user: u_e201, kind: paraphrase, query: "고장 난 제품 받으면 전액 돌려받아?", relevant: ["POL-REF-001@v2#5", "POL-REF-001@v1#4"]}
+  - {id: H03, db_user: u_e201, kind: paraphrase, query: "엉뚱한 물건이 배달됐어", relevant: ["POL-REF-001@v2#5", "GUIDE-CS-001@v1#1", "GUIDE-CS-004@v1#1"]}
+  - {id: H04, db_user: u_e201, kind: paraphrase, query: "카드로 결제한 돈은 언제 돌아와?", relevant: ["POL-REF-002@v1#2"]}
+  - {id: H05, db_user: u_e201, kind: paraphrase, query: "상품권으로 산 건 현금으로 줘?", relevant: ["POL-REF-002@v1#2", "FAQ-CS-001@v1#3"]}
+  - {id: H06, db_user: u_e201, kind: paraphrase, query: "팀장님은 얼마까지 결재할 수 있어?", relevant: ["POL-APR-001@v2#2", "POL-APR-001@v1#2"]}
+  - {id: H07, db_user: u_e201, kind: paraphrase, query: "환불 금액이 커서 팀장 한도를 넘으면 쪼개서 올려도 돼?", relevant: ["POL-APR-001@v2#3"]}
+  - {id: H08, db_user: u_e201, kind: paraphrase, query: "물건을 교환해 줄 수 있어?", relevant: ["FAQ-CS-001@v1#1"]}
+  - {id: H09, db_user: u_e201, kind: paraphrase, query: "배송 전에 주문을 없애고 싶대", relevant: ["FAQ-CS-001@v1#1", "POL-REF-001@v2#1"]}
+  - {id: H10, db_user: u_e201, kind: paraphrase, query: "아마존 쪽 비 오는 시즌에 배송 늦은 거 보상해?", relevant: ["NOTICE-N-2018-01@v1#1", "NOTICE-N-2018-01@v1#2"]}
+  - {id: H11, db_user: u_e201, kind: paraphrase, query: "환불 문의 답장은 언제까지 보내야 해?", relevant: ["GUIDE-CS-003@v1#1"]}
+  - {id: H12, db_user: u_e201, kind: paraphrase, query: "셀러 정산에서 환불 금액 빼는 건 언제야?", relevant: ["POL-SLR-001@v1#2"]}

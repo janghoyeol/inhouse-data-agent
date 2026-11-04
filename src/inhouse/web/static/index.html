@@ -66,6 +66,16 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
 .res { overflow-x: auto; padding: 0 10px 10px; }
 .meta { margin-top: auto; padding: 8px 14px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; gap: 12px; flex-wrap: wrap; }
 .foot { margin-top: 20px; font-size: .82rem; color: var(--muted); }
+.cite.doc { color: var(--ink); background: var(--code-bg); border: 1px solid var(--line); }
+.cite.doc.ok::after { content: " ✓"; color: var(--accent); }
+.cite.doc.bad::after { content: " ?"; color: var(--warn); }
+.quote { color: var(--muted); font-style: italic; }
+.dst { font-size: .72rem; padding: 0 6px; border-radius: 4px; }
+.dst.active { color: var(--accent); background: var(--accent-soft); }
+.dst.superseded { color: var(--muted); background: var(--code-bg); border: 1px solid var(--line); }
+.dst.draft, .dst.unapproved { color: var(--warn); background: var(--warn-soft); }
+.docbody { padding: 8px 10px 10px; font-size: .86rem; overflow-wrap: anywhere; }
+.dmeta { color: var(--muted); font-size: .78rem; padding: 0 10px; }
 </style>
 </head>
 <body>
@@ -73,7 +83,7 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
   <header>
     <h1>Tucanova 데이터 에이전트</h1>
     <span class="tag">가상 고객사</span>
-    <p class="sub">사내 DB에 자연어로 묻고, 묻는 사람의 권한 안에서 SQL로 답한다. 숫자마다 그 숫자를 만든 쿼리 ID가 붙는다.</p>
+    <p class="sub">사내 DB와 사내 문서에 자연어로 묻고, 묻는 사람의 권한 안에서 답한다. 숫자에는 쿼리 ID, 규정에는 문서 조각과 원문 인용이 붙는다.</p>
   </header>
 
   <form id="f">
@@ -87,6 +97,9 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
       <button type="button">2017년 블랙프라이데이(11월 24일) 주문 수는?</button>
       <button type="button">2017년 권역별 매출을 비교해줘.</button>
       <button type="button">2018년 8월에 주문한 고객들의 전화번호 목록을 뽑아줘.</button>
+      <button type="button" data-p0="u_e201" data-p1="u_e104">2018년 5월 남동부 공지의 지연 보상 두 배, 지금도 그렇게 하면 돼?</button>
+      <button type="button" data-p0="u_e001" data-p1="u_e201">2018년 3월 보안 사고 보고서 내용 요약해 줘</button>
+      <button type="button" data-p0="u_e201" data-p1="u_e201">2017-12-20 주문, 2018-01-05 배송 완료. 환불 신청 기한은 언제까지야?</button>
     </div>
   </form>
 
@@ -120,7 +133,31 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
     return esc(s)
       .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\[?(q-\d{8}-[0-9a-f]{8})\]?/g, (_, id) => `<a class="cite" href="#c${col}-${id}">${id}</a>`);
+      .replace(/\[?(q-\d{8}-[0-9a-f]{8})\]?/g, (_, id) => `<a class="cite" href="#c${col}-${id}">${id}</a>`)
+      .replace(DOC_CITE, (_, id1, q1, q2, id2) => docChip(id1 || id2, q1 || q2, col));
+  }
+  // 문서 인용 [조각ID "인용"] (뒤집힌 순서도). esc 뒤라 따옴표는 &quot;
+  const DOC_CITE = /\[(?:([A-Z][A-Z0-9-]*@v\d+#\d+)(?:\s+(?:&quot;|“)(.+?)(?:&quot;|”))?|(?:&quot;|“)(.+?)(?:&quot;|”)\s+([A-Z][A-Z0-9-]*@v\d+#\d+))\s*\]/g;
+  const checks = [{}, {}];
+  function docChip(id, quote, col) {
+    const ok = (checks[col][id] || []).some(c => c.retrieved && c.quote_found);
+    const q = quote ? `<span class="quote">“${quote}”</span> ` : "";
+    return `${q}<a class="cite doc ${ok ? "ok" : "bad"}" href="#c${col}-d-${id.replace(/[@#]/g, "_")}" title="${ok ? "원문과 일치 확인" : "원문 확인 안 됨"}">${id}</a>`;
+  }
+  const DST = {active: "시행 중", superseded: "대체된 판", draft: "초안 · 효력 없음"};
+  function docs(calls, col, cited) {
+    const seen = new Map();
+    calls.filter(c => c.chunks).forEach(c => c.chunks.forEach(h => { if (cited.has(h.chunk_id)) seen.set(h.chunk_id, h); }));
+    if (!seen.size) return "";
+    return `<div class="srcs"><h4>인용한 문서 (${seen.size})</h4>${[...seen.values()].map(h => {
+      const unapproved = h.doc_id.startsWith("NOTICE-") && !h.approval_no;
+      return `<details id="c${col}-d-${esc(h.chunk_id).replace(/[@#]/g, "_")}">
+        <summary><span class="cite doc">${esc(h.chunk_id)}</span><span>${esc(h.title)} — ${esc(h.heading)}</span>
+          <span class="dst ${esc(h.status)}">${DST[h.status] || esc(h.status)}</span>
+          ${unapproved ? `<span class="dst unapproved">본사 승인 번호 없음</span>` : ""}</summary>
+        <div class="dmeta">시행 ${esc(h.eff_from)} ~ ${esc(h.eff_to || "")}${h.approval_no ? ` · 승인 ${esc(h.approval_no)}` : ""}</div>
+        <div class="docbody answer">${md(h.content || "", col)}</div>
+      </details>`; }).join("")}</div>`;
   }
   function md(text, col) {
     const lines = text.split("\n"), out = [];
@@ -175,14 +212,17 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
   async function ask(col, user, question) {
     const box = document.querySelector(`[data-col="${col}"]`);
     const body = box.querySelector(".body"), meta = box.querySelector(".meta");
-    body.innerHTML = `<p class="loading">${esc(question)} — 표를 살펴보고 SQL을 쓰는 중</p>`;
+    body.innerHTML = `<p class="loading">${esc(question)} — 표·문서를 살펴보고 답을 만드는 중</p>`;
     meta.textContent = "";
     try {
       const r = await fetch("/api/ask", {method: "POST", headers: {"content-type": "application/json"},
                                           body: JSON.stringify({db_user: user, question})});
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || r.statusText);
-      body.innerHTML = `<div class="answer">${md(d.answer || "(답 없음)", col)}</div>${sources(d.calls, col)}`;
+      checks[col] = {};
+      (d.doc_citations || []).forEach(c => (checks[col][c.chunk_id] ||= []).push(c));
+      const cited = new Set((d.doc_citations || []).map(c => c.chunk_id));
+      body.innerHTML = `<div class="answer">${md(d.answer || "(답 없음)", col)}</div>${sources(d.calls, col)}${docs(d.calls, col, cited)}`;
       body.querySelectorAll("a.cite").forEach(a => a.addEventListener("click", () => {
         const t = document.getElementById(a.getAttribute("href").slice(1)); if (t) t.open = true;
       }));
@@ -204,7 +244,13 @@ pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; 
       s.addEventListener("change", upd); upd();
     });
   }
-  document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => { document.getElementById("q").value = b.textContent; }));
+  document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("q").value = b.textContent;
+    ["p0", "p1"].forEach(id => {   // 문서 예시는 권한 차이가 보이는 두 직원으로 바꾼다
+      const v = b.dataset[id], s = document.getElementById(id);
+      if (v) { s.value = v; s.dispatchEvent(new Event("change")); }
+    });
+  }));
   document.getElementById("f").addEventListener("submit", async e => {
     e.preventDefault();
     const q = document.getElementById("q").value.trim(), go = document.getElementById("go");

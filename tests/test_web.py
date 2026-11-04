@@ -38,6 +38,23 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(len(sql["rows"]), 20)  # 화면에는 20행까지만
         self.assertTrue(sql["truncated"])
 
+    def test_doc_calls_and_citations_are_returned(self):
+        def doc_ask(db_user, question):
+            a = fake_ask(db_user, question)
+            hit = {"chunk_id": "POL-REF-001@v2#3", "doc_id": "POL-REF-001", "version": 2, "title": "환불·반품 규정",
+                   "status": "active", "eff_from": "2018-01-01", "eff_to": None, "approval_no": None,
+                   "heading": "3. 신청 기한", "content": "15일 이내", "score": 0.3}
+            a.calls.append(ToolCall("search_docs", {"query": "기한"}, {"search_id": "s-1", "results": [hit]}))
+            a.doc_citations = [{"chunk_id": "POL-REF-001@v2#3", "quote": "15일 이내", "retrieved": True,
+                                "quote_found": True, "warnings": []}]
+            return a
+        d = TestClient(create_app(ask_fn=doc_ask, cost_cap_usd=1.0)).post(
+            "/api/ask", json={"db_user": "u_e201", "question": "기한?"}).json()
+        call = next(c for c in d["calls"] if c["tool"] == "search_docs")
+        self.assertEqual(call["chunks"][0]["heading"], "3. 신청 기한")
+        self.assertNotIn("score", call["chunks"][0])
+        self.assertTrue(d["doc_citations"][0]["quote_found"])
+
     def test_only_known_employees(self):
         c = self.client()
         for user in ["postgres", "u_stranger", "r_agent", ""]:

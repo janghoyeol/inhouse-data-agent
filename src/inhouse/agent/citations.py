@@ -12,7 +12,10 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-CITE = re.compile(r"\[([A-Z][A-Z0-9-]*@v\d+#\d+)(?:\s+[\"“”']([^\]\"“”]+)[\"“”'])?\s*\]")
+_ID = r"[A-Z][A-Z0-9-]*@v\d+#\d+"
+_Q = r"[\"“]((?:(?![\"”]\s*\]).)+?)[\"”]"   # 인용 안에 따옴표가 있어도 끝의 '"]'까지 읽는다
+# [조각ID "인용"] 이 정식. 순서를 뒤집은 ["인용" 조각ID]도 읽는다 (모델이 가끔 그렇게 쓴다)
+CITE = re.compile(rf"\[(?:({_ID})(?:\s+{_Q})?|{_Q}\s+({_ID}))\s*\]")
 _ELLIPSIS = re.compile(r"\s*(?:…|\.\.\.)\s*")
 
 
@@ -23,11 +26,12 @@ class Citation:
 
 
 def parse(text: str) -> list[Citation]:
-    return [Citation(m.group(1), (m.group(2) or "").strip() or None) for m in CITE.finditer(text or "")]
+    return [Citation(m.group(1) or m.group(4), ((m.group(2) or m.group(3)) or "").strip() or None)
+            for m in CITE.finditer(text or "")]
 
 
 def _norm(s: str) -> str:
-    s = re.sub(r"[*`_]", "", s)
+    s = re.sub(r"[*`_\\]", "", s)
     s = s.replace("“", '"').replace("”", '"').replace("’", "'")
     return re.sub(r"\s+", " ", s).strip()
 
