@@ -90,4 +90,6 @@
     - [ ] **정식 12×3 남음: 이 세션 키(TREND_ANTHROPIC_API_KEY) 크레딧 소진으로 중단** → 호열이 크레딧 충전하거나 다른 키 주면 이어서. 평가기는 실행별 오류를 기록하게 고침
   - [~] 2b-4 (2026-11-04 호열 결정 A안 '열고 매일 초기화', 실제 돈 안 나감 확인): `inhouse.data.reset_demo`(제안 + 승인으로 생긴 환불만 삭제, 시퀀스 맞춤, 테스트 1) · `.github/workflows/reset-demo.yml`(매일 KST 04:07 + 손으로) · render.yaml ENABLE_APPROVALS=1 · 화면 안내(가상 DB·실제 결제 없음·매일 초기화) · 제안 예시 질문 · README 2단계 절 · 테스트 150개
     - 알아 둘 것: 예시 주문은 하루에 한 번만 제안·승인된다(같은 사유 중복을 DB가 막음) → 두 번째 방문자는 DB 거절 이유를 보게 됨 (그것도 데모)
-    - [ ] 공개 주소에서 approvals 켜졌는지·승인 흐름 확인, reset-demo 손으로 한 번 실행, showcase 카드 문구
+    - [x] 공개 주소: /api/config approvals true(Render가 render.yaml 변경을 자동 반영), /approvals 200, Neon의 decide_refund 동작(없는 제안·CS 승인 거절 메시지), reset-demo 첫 실행 성공(27초)
+    - [ ] **Claude API 크레딧 소진**: 공개 데모 질문도 BadRequestError(크레딧) — Render 키와 세션 키가 같은 계정으로 보임 → 호열 충전 필요. 화면에 크레딧 이유를 보여주게 고침
+    - [ ] 충전 뒤: 공개 주소에서 CS 제안 → CS 팀장 승인 끝까지 확인, 환불 제안 정식 12×3 측정, showcase 카드 문구(문서·승인 흐름)
