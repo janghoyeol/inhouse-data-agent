@@ -96,3 +96,7 @@
     - [x] showcase 카드: 설명에 문서·환불 제안·승인, 요점 2줄 추가, 작동 예시 2번째 "환불 승인 흐름"(img/demo/inhouse-refund.webp), 라이브 확인
 - [x] 포트폴리오 정리 (2026-11-04): Claude Docs 문서 '포트폴리오 정리 — inhouse-data-agent 면접 준비' https://claude.ai/artifact/Qpvm45cuWwAZRGp1t78u4m (30초 소개·한눈에 표·설계 결정 8·구조 그림·예상 질문 12·한계)
 - 프로젝트 C는 하지 않기로 (2026-11-04 호열: 후보 없음, 실제 도입은 부담) → 다음은 지원 준비(이력서 문장·회사 맞춤 소개). 대안(사용성 테스트 3명·고객 역할극)은 나중에 원하면
+- [x] 이력서·포트폴리오 새로 (2026-11-04, 호열이 예전 함께 고치던 이력서를 잃어 기존 PDF 포트폴리오 19쪽 + showcase 기준으로 재작성, 목표 FDE·신입 AI 개발자)
+  - 이력서(Claude Docs): https://claude.ai/artifact/5oshvkBQpVQV8nDq5RThn3 — 소개·핵심 역량 표·AI 에이전트 4개·이전 프로젝트 표·학력·자격·기술. 맨 끝 '바뀐 점' 절은 제출 전 지우기
+  - 포트폴리오(Slides 14장): https://claude.ai/artifact/MdRs59Ys7peo4AFD3hbaDA — 표지·원칙·한눈에·inhouse 5장·MCP·trend·nsmc·백엔드·이력·마무리, 실제 캡처 6장
+  - 뺀 것: 백엔드 개발자 제목·해시태그, Named Things, 재미로 만든 것, 팀 프로젝트 상세, 생년월일·사진. 확인 필요: trend-agent·nsmc 기간, PR Guardian·TaskTriage·Realtime Board 링크
