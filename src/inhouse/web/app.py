@@ -2,7 +2,8 @@
 
 - 묻는 사람은 정해진 직원 역할(PERSONAS) 중에서만 고른다. 임의의 DB 계정 이름은 받지 않는다.
 - 답은 에이전트(agent.ask)가 직원 역할로 DB를 조회해 만들고, 쓴 SQL과 결과·쿼리 ID를 같이 돌려준다.
-- 공개 데모를 가정해 하루(KST) Claude 비용 상한을 둔다.
+- 공개 데모를 가정해 하루(KST) Claude 비용 상한과 IP별 질문 수 상한(분당·하루)을 둔다.
+- 감사 로그 API(/api/audit)는 다른 방문자의 질문이 보이므로 ENABLE_AUDIT_API=1일 때만 켠다.
 
 실행: DATABASE_URL=… TCN_USER_PASSWORD=… ANTHROPIC_API_KEY=… uvicorn inhouse.web.app:app
 """
@@ -17,7 +18,7 @@ from importlib import resources
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
@@ -61,6 +62,42 @@ class CostGuard:
             self.spent += usd
 
 
+class RateLimit:
+    """IP별 질문 수 상한: 최근 60초에 per_minute개, 하루(KST)에 per_day개.
+
+    Render 같은 프록시 뒤라 X-Forwarded-For 첫 값을 클라이언트로 본다. 위조로 피할 수는 있지만
+    비용의 최종선은 CostGuard의 하루 상한이다.
+    """
+
+    def __init__(self, per_minute: int, per_day: int,
+                 clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(KST)):
+        self.per_minute, self.per_day, self.clock = per_minute, per_day, clock
+        self.recent: dict[str, deque] = {}
+        self.day, self.daily = None, {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def client_ip(request: Request) -> str:
+        fwd = request.headers.get("x-forwarded-for")
+        if fwd:
+            return fwd.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
+
+    def allow(self, ip: str) -> bool:
+        now = self.clock()
+        with self._lock:
+            if now.date() != self.day:
+                self.day, self.daily = now.date(), {}
+            q = self.recent.setdefault(ip, deque())
+            while q and (now - q[0]).total_seconds() >= 60:
+                q.popleft()
+            if len(q) >= self.per_minute or self.daily.get(ip, 0) >= self.per_day:
+                return False
+            q.append(now)
+            self.daily[ip] = self.daily.get(ip, 0) + 1
+            return True
+
+
 def _region_ko(code: str | None) -> str | None:
     return REGIONS[code][1] if code else None
 
@@ -78,10 +115,15 @@ def _call_view(call) -> dict[str, Any]:
     return view
 
 
-def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | None = None) -> FastAPI:
+def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | None = None,
+               rate_limit: RateLimit | None = None, audit_api: bool | None = None) -> FastAPI:
     """ask_fn(db_user, question) → agent.Answer. 테스트에서는 가짜를 넣는다."""
     cap = cost_cap_usd if cost_cap_usd is not None else float(os.environ.get("DAILY_COST_CAP_USD", "0.5"))
     guard = CostGuard(cap)
+    limiter = rate_limit or RateLimit(int(os.environ.get("RATE_PER_MINUTE", "6")),
+                                      int(os.environ.get("RATE_PER_DAY", "40")))
+    if audit_api is None:
+        audit_api = os.environ.get("ENABLE_AUDIT_API") == "1"
 
     if ask_fn is None:
         import anthropic
@@ -99,6 +141,10 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
 
     app = FastAPI(title="Tucanova 데이터 에이전트")
 
+    @app.get("/healthz")
+    def healthz() -> dict[str, str]:
+        return {"status": "ok"}
+
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
         return resources.files("inhouse.web").joinpath("static/index.html").read_text(encoding="utf-8")
@@ -108,7 +154,7 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
         return [{"db_user": u, "role": p["role"], "region": _region_ko(p["region"])} for u, p in PERSONAS.items()]
 
     @app.post("/api/ask")
-    def ask(body: Ask) -> dict[str, Any]:
+    def ask(body: Ask, request: Request) -> dict[str, Any]:
         if body.db_user not in PERSONAS:
             raise HTTPException(400, "알 수 없는 직원입니다. 목록에서 고르세요.")
         question = body.question.strip()
@@ -116,6 +162,8 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
             raise HTTPException(400, f"질문은 1~{MAX_QUESTION}자로 써 주세요.")
         if not guard.allow():
             raise HTTPException(429, "오늘의 데모 사용량을 다 썼습니다. 내일 다시 시도해 주세요.")
+        if not limiter.allow(RateLimit.client_ip(request)):
+            raise HTTPException(429, "질문이 너무 잦습니다. 잠시 뒤에 다시 시도해 주세요.")
         ans = ask_fn(body.db_user, question)
         guard.add(ans.cost_usd)
         return {"db_user": body.db_user, "answer": ans.text, "cited": ans.cited, "model": ans.model,
@@ -124,7 +172,9 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
 
     @app.get("/api/audit")
     def audit_log(limit: int = 20) -> list[dict[str, Any]]:
-        """최근 감사 기록 (질문·SQL·결과 상태). 데모라 직원 구분 없이 보여준다."""
+        """최근 감사 기록 (질문·SQL·결과 상태). 데모라 직원 구분 없이 보여준다. 공개 배포에선 꺼 둔다."""
+        if not audit_api:
+            raise HTTPException(404, "Not Found")
         if not audit_path or not os.path.exists(audit_path):
             return []
         with open(audit_path, encoding="utf-8") as f:

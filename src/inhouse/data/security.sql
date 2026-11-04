@@ -22,11 +22,16 @@ DO $$
 DECLARE r record;
 BEGIN
     FOR r IN SELECT d.db_role, e.role_cd FROM db_user d JOIN emp e USING (emp_no) LOOP
+        -- 새 역할은 기본값이 전부 NO(슈퍼유저·RLS 우회·역할 생성…)라 LOGIN만 준다. 관리형 Postgres(Neon 등)의
+        -- 관리자는 슈퍼유저가 아니라서 이런 속성을 ALTER로 바꿀 수 없으므로, 이미 있는 역할은 바꾸지 않고 검사만 한다.
         IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = r.db_role) THEN
             EXECUTE format('CREATE ROLE %I LOGIN', r.db_role);
         END IF;
-        EXECUTE format('ALTER ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION INHERIT',
-                       r.db_role);
+        IF EXISTS (SELECT FROM pg_roles WHERE rolname = r.db_role
+                   AND (rolsuper OR rolbypassrls OR rolreplication OR rolcreaterole OR rolcreatedb OR NOT rolinherit
+                        OR NOT rolcanlogin)) THEN
+            RAISE EXCEPTION '직원 역할 %의 속성이 위험하거나 로그인할 수 없습니다. 역할을 지우고 다시 적재하세요.', r.db_role;
+        END IF;
         EXECUTE format('GRANT r_agent TO %I', r.db_role);
         IF r.role_cd = 'CS' THEN
             EXECUTE format('GRANT r_cs TO %I', r.db_role);

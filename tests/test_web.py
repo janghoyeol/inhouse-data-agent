@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from inhouse.agent.agent import Answer, ToolCall
-from inhouse.web.app import CostGuard, create_app
+from inhouse.web.app import CostGuard, RateLimit, create_app
 
 
 def fake_ask(db_user, question):
@@ -60,6 +60,31 @@ class TestWeb(unittest.TestCase):
         self.assertFalse(g.allow())
         now[0] = dt.datetime(2026, 11, 5, 0, 1)
         self.assertTrue(g.allow())
+
+    def test_rate_limit_per_ip(self):
+        c = TestClient(create_app(ask_fn=fake_ask, cost_cap_usd=1.0, rate_limit=RateLimit(per_minute=2, per_day=100)))
+        ask = lambda ip: c.post("/api/ask", json={"db_user": "u_e001", "question": "q"},
+                                headers={"x-forwarded-for": f"{ip}, 10.0.0.1"}).status_code
+        self.assertEqual([ask("1.1.1.1") for _ in range(3)], [200, 200, 429])
+        self.assertEqual(ask("2.2.2.2"), 200)  # 다른 IP는 따로 센다
+
+    def test_rate_limit_window_and_day(self):
+        now = [dt.datetime(2026, 11, 4, 12, 0, 0)]
+        r = RateLimit(per_minute=1, per_day=2, clock=lambda: now[0])
+        self.assertTrue(r.allow("a"))
+        self.assertFalse(r.allow("a"))
+        now[0] += dt.timedelta(seconds=61)
+        self.assertTrue(r.allow("a"))
+        now[0] += dt.timedelta(seconds=61)
+        self.assertFalse(r.allow("a"))  # 하루 2회 다 씀
+        now[0] = dt.datetime(2026, 11, 5, 0, 0, 1)
+        self.assertTrue(r.allow("a"))
+
+    def test_audit_api_off_by_default(self):
+        self.assertEqual(self.client().get("/api/audit").status_code, 404)
+        on = TestClient(create_app(ask_fn=fake_ask, cost_cap_usd=1.0, audit_api=True))
+        self.assertEqual(on.get("/api/audit").json(), [])
+        self.assertEqual(self.client().get("/healthz").json(), {"status": "ok"})
 
 
 if __name__ == "__main__":

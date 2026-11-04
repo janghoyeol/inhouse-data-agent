@@ -1,0 +1,32 @@
+# Render Blueprint: 공개 웹 데모. Render 대시보드 → New → Blueprint → 이 레포.
+# DB는 Render 무료 DB(30일 뒤 삭제)가 아니라 Neon 무료 Postgres에 적재해 두고 그 주소를 넣는다 (README '공개 데모').
+# 비밀값은 처음 만들 때 대시보드에서 입력한다 (sync: false = 레포에 값을 두지 않음).
+services:
+  - type: web
+    name: inhouse-data-agent
+    runtime: python
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: pip install .
+    startCommand: uvicorn inhouse.web.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: DATABASE_URL        # Neon 연결 문자열 (관리자 계정, ?sslmode=require). 앱은 여기서 호스트·DB만 쓰고 직원 역할로 접속
+        sync: false
+      - key: TCN_USER_PASSWORD   # 적재할 때 직원 역할에 넣은 비밀번호
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: MODEL
+        value: claude-haiku-5-5
+      - key: DAILY_COST_CAP_USD  # 하루(KST) Claude 비용 상한. 질문당 약 $0.002라 1달러면 하루 수백 번
+        value: "1.0"
+      - key: RATE_PER_MINUTE     # IP별 분당 질문 수 (화면은 한 번에 두 직원에게 물으므로 2개씩 씀)
+        value: "6"
+      - key: RATE_PER_DAY
+        value: "40"
+      - key: AUDIT_PATH
+        value: /tmp/audit.jsonl
