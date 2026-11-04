@@ -1,6 +1,7 @@
 """Tucanova 데이터 에이전트: Claude tool-use 루프 (5단계).
 
-질문 하나 → 도구(list_tables·describe_table·lookup_metric·run_sql) 반복 → 쿼리 ID를 출처로 단 답.
+질문 하나 → 도구(list_tables·describe_table·lookup_metric·run_sql·search_docs·read_doc) 반복 →
+숫자에는 쿼리 ID, 규정·절차에는 문서 조각 ID와 인용 문장을 출처로 단 답. 문서 인용은 코드가 검증한다(citations).
 평가(eval)와 웹 화면(6단계)이 같이 쓴다. 도구 호출 기록을 남겨야 해서 SDK tool runner 대신 직접 루프를 돈다.
 """
 from __future__ import annotations
@@ -11,7 +12,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from . import knowledge, personas
+from . import citations, knowledge, personas
 from .tools import TOOL_SCHEMAS, Toolbox
 
 # $/1M 토큰 (입력, 출력). 캐시 읽기는 입력의 0.1배, 캐시 쓰기는 1.25배로 계산
@@ -30,6 +31,17 @@ SYSTEM = """당신은 가상 고객사 Tucanova(브라질 온라인 마켓플레
 - 사용자의 권한 밖(다른 권역, 고객 개인정보 원문, 데이터 변경)은 할 수 없다고 분명히 말하고, 대신 할 수 있는 것을 제안합니다.
 - 권역 매니저의 결과는 자기 권역 범위라는 것을 답에 밝힙니다. 정의가 없는 지표는 쓴 가정을 밝힙니다.
 - SQL 오류가 나면 메시지를 읽고 고쳐서 다시 실행합니다.
+
+사내 문서 (규정·지침·공지·회의록)
+- 규정·기한·절차·승인 같은 질문은 search_docs로 문서를 찾습니다. 필요하면 read_doc으로 문서 전체를 읽습니다.
+- 문서 내용을 쓸 때마다 [조각ID "문서에 있는 그대로의 짧은 인용"]을 붙입니다. 예) [POL-REF-001@v2#3 "다음 날부터 15일 이내"]
+  인용은 조각 본문을 글자 그대로 옮깁니다. 바꿔 말한 문장을 따옴표 안에 넣지 않습니다.
+- 효력은 문서 효력 규칙(POL-GOV-001)을 따릅니다: 시행 중(active) 판만 효력이 있고, 초안(draft)은 효력이 없습니다.
+  여러 판이 있으면 문서에 적힌 적용 기준일(예: 주문일, 승인일)에 시행 중이던 판을 고릅니다.
+  권역 공지가 본사 규정과 다르면 본사 승인 번호(approval_no)가 있을 때만, 공지의 기간·대상 권역 안에서만 따릅니다.
+  FAQ·회의록은 설명·기록일 뿐이고, 규정과 다르면 규정을 따릅니다.
+- 숫자(매출·건수·금액)는 문서나 회의록이 아니라 run_sql 결과에서 가져옵니다.
+- 검색 결과에 없는 문서는 이 사용자가 볼 수 없는 문서일 수 있습니다. 내용을 추측해 지어내지 않습니다.
 
 공통 규칙 (지표 사전)
 {rules}"""
@@ -50,6 +62,7 @@ class Answer:
     text: str = ""
     calls: list[ToolCall] = field(default_factory=list)
     cited: list[str] = field(default_factory=list)
+    doc_citations: list[dict[str, Any]] = field(default_factory=list)
     stop_reason: str = ""
     turns: int = 0
     tokens: dict[str, int] = field(default_factory=lambda: {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0})
@@ -60,6 +73,16 @@ class Answer:
         """query_id → run_sql 결과 (성공한 것만)."""
         return {c.result["query_id"]: c.result for c in self.calls
                 if c.name == "run_sql" and c.result.get("status") == "ok"}
+
+    def retrieved_chunks(self) -> dict[str, dict[str, Any]]:
+        """chunk_id → 이번 답에서 search_docs·read_doc으로 받은 조각."""
+        out: dict[str, dict[str, Any]] = {}
+        for c in self.calls:
+            if c.name == "search_docs":
+                out.update({h["chunk_id"]: h for h in c.result.get("results", [])})
+            elif c.name == "read_doc":
+                out.update({h["chunk_id"]: h for h in c.result.get("chunks", [])})
+        return out
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -113,6 +136,7 @@ def ask(client, toolbox: Toolbox, question: str, model: str = "claude-haiku-5-5"
         ans.stop_reason = "max_turns"
     ans.text = "".join(b.text for b in (resp.content if resp is not None else []) if b.type == "text")
     ans.cited = list(dict.fromkeys(QUERY_ID.findall(ans.text)))
+    ans.doc_citations = citations.verify(ans.text, ans.retrieved_chunks())
     ans.cost_usd = round(_cost(model, ans.tokens), 5)
     ans.seconds = round(time.monotonic() - t0, 1)
     return ans

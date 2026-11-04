@@ -178,7 +178,8 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
                    else f"답을 만드는 중 오류가 났습니다 ({name}).")
             raise HTTPException(502, msg)
         guard.add(ans.cost_usd)
-        return {"db_user": body.db_user, "answer": ans.text, "cited": ans.cited, "model": ans.model,
+        return {"db_user": body.db_user, "answer": ans.text, "cited": ans.cited,
+                "doc_citations": getattr(ans, "doc_citations", []), "model": ans.model,
                 "turns": ans.turns, "cost_usd": ans.cost_usd, "seconds": ans.seconds,
                 "stop_reason": ans.stop_reason, "calls": [_call_view(c) for c in ans.calls]}
 

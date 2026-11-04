@@ -115,6 +115,10 @@ class FakeToolbox:
         self.calls.append((name, args))
         if name == "run_sql":
             return {"query_id": "q-20261030-0000abcd", "status": "ok", "columns": ["n"], "rows": [[812]], "error": ""}
+        if name == "search_docs":
+            return {"search_id": "s-20261104-0000abcd", "results": [
+                {"chunk_id": "POL-REF-001@v2#3", "doc_id": "POL-REF-001", "version": 2, "status": "active",
+                 "approval_no": None, "content": "다음 날부터 **15일 이내**에 환불을 신청해야 한다."}]}
         return {"metric": {"id": "order_count"}}
 
 
@@ -147,7 +151,19 @@ class TestAgentLoop(unittest.TestCase):
         self.assertNotIn("tool_choice", client.requests[0])
         q = {"expect": "result"}
         self.assertEqual(grade(q, {"rows": [[812]]}, ans), {"passed": True, "via": "cited"})
+        self.assertIn("search_docs", [t["name"] for t in client.requests[0]["tools"]])
+        self.assertEqual(ans.doc_citations, [])
         self.assertEqual(grade(q, {"rows": [[999]]}, ans)["passed"], False)
+
+    def test_doc_citations_are_verified_against_retrieved_chunks(self):
+        _, _, ans = self.run_agent([
+            NS(stop_reason="tool_use", usage=usage(), content=[
+                block(type="tool_use", id="t1", name="search_docs", input={"query": "환불 기한"})]),
+            NS(stop_reason="end_turn", usage=usage(), content=[block(type="text", text=(
+                '15일입니다 [POL-REF-001@v2#3 "다음 날부터 15일 이내"]. 예전엔 7일 [POL-REF-001@v1#3 "7일 이내"].'))]),
+        ])
+        self.assertEqual([(c["chunk_id"], c["retrieved"], c["quote_found"]) for c in ans.doc_citations],
+                         [("POL-REF-001@v2#3", True, True), ("POL-REF-001@v1#3", False, None)])
 
     def test_uncited_correct_result_is_flagged(self):
         _, _, ans = self.run_agent([

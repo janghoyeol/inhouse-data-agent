@@ -66,4 +66,8 @@
     - 변형 5개(정책 항상 참·조각 RLS 끔·CS에 mgr 태그·권역 태그 빠짐·SECURITY DEFINER 빠짐) 모두 테스트가 잡음. current_user로 바꾸는 변형은 SET ROLE이 막혀 구분 불가(같은 동작)
     - 전체 적재 48.7초, 조각 96개. u_e001 27문서/88조각 · u_e104 18/62 · u_e201 22/70
     - 공개 데모(Neon)는 아직 옛 적재 → 2a 끝나면 호열이 loader 다시 실행
-  - [ ] 2a-3 search_docs 도구 + 인용 검증
+  - [x] 2a-3 (2026-11-04): 도구 `search_docs`(2글자 토큰 OR tsquery·ts_rank, 직원 역할로 → RLS, 판·상태·시행일·승인 번호 함께, 감사 kind doc_search·search_id s-…)·`read_doc` · `agent/citations.py`(답 속 [조각ID "인용"] → 받은 조각인지·인용이 글자 그대로 있는지(강조·공백 무시, … 순서)·경고 draft/superseded/unapproved_notice) · Answer.doc_citations, 웹 API에 doc_citations
+    - 시스템 프롬프트에 문서 규칙(효력 POL-GOV-001, 판 고르기, 승인 번호, 숫자는 SQL). 테스트 14개 추가 총 120개
+    - 라이브(Haiku 5.5, CS·남동부, 6문항 $0.0114): DT1 2018-01-12 · DT2 초안 효력 없음 · DT5 승인 없음 → 본사 규정 · DT6 보안 보고서·성과급 지어내지 않음 · DT4 북부 5일 공제 → 6/6 맞음, 인용 25개 중 24개 검증(1개는 인용 문장 없이 ID만)
+    - 1단계 회귀: 50×1 Haiku 49/50, $0.0016/문항 — 변화 없음 (D03 기존 실패)
+  - [ ] 2a-4 검색 정답셋·재현율 → 문서 질문 정답셋·측정 · 웹 화면에 문서 인용 표시
