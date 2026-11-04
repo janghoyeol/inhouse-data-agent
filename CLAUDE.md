@@ -42,6 +42,11 @@
   - [~] 연습 문제 `eval/practice.yaml` (정답셋과 별개, 정답 포함): 1차 P01~P05 비율·평균·나눗셈 (2026-11-03 출제)
     진행: P01 97.26 ✅(취소 포함 분모 판단 정확) · P02 1.14 ✅(주문별 group by → avg, 첫 시도는 avg(item_seq)·기간 복붙 실수) — 다음은 P03(avg·order by)부터
   - [ ] 호열: A·B·C 초안 30개 검토
-  - [ ] 정식 측정: Haiku/Sonnet, 문항당 3회 (Haiku 약 $0.25, Sonnet 약 $5 예상)
-- [ ] 6. 웹 화면(사용자 전환) → CI → showcase 카드
+  - [x] 정식 측정 (2026-11-04, 50문항×3회, effort medium): Haiku 5.5 147/150(98%) $0.0016/문항 · Sonnet 5.5 147/150(98%) $0.0218/문항 → 기본 Haiku (`eval/RESULTS.md`)
+    - 실패 8건 모두 읽음: 채점 규칙 2(D09 부호 → abs, E07 꼬리표 열 → 한 줄 정답은 숫자만, `inhouse.eval.regrade`로 재채점) · 질문 애매 3(Sonnet B05 '미분류' → 측정 후 질문 수정) · 출처 원칙 위반 3(Haiku B05·D03, 틀림 유지)
+    - run.py `--repeat --workers`, 결과 행도 기록(재채점용)
+- [x] 6. 웹 화면 (`inhouse.web.app`, FastAPI + 정적 페이지): 같은 질문을 두 직원에게 나란히 → 권한별 답 비교, 답 속 쿼리 ID → 실행 SQL·결과 펼침, 직원은 PERSONAS에서만(임의 DB 계정 거절), 하루 비용 상한(DAILY_COST_CAP_USD), 감사 로그 API
+  - 테스트 6개(가짜 에이전트), 총 87개. Compose `web` 서비스. 캡처 `docs/demo/*.webp` (본사 vs 남동부 매출, 본사 vs CS 연락처)
+  - 공개 배포는 안 함(로컬 실행): DB 호스팅·API 비용 노출 결정 필요 → 호열과 합의 후
+- [x] README를 사례 연구로 (고객 문제 → 데이터·함정 → 설계 결정 → 측정 → 배운 것), showcase 카드
 - [ ] 2단계(별도 ADR): 사내 문서 RAG + 쓰기 작업 승인 흐름

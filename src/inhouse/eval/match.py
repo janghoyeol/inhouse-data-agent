@@ -4,6 +4,9 @@
 - 정답이 표면: 행 수가 같고, 정답의 열마다 값 묶음이 같은 열이 에이전트 결과에 있으면 맞음 (열 이름·열 순서·추가 열 무관)
   order_matters면 행 순서도 같아야 하고, 순위 질문이므로 에이전트 결과가 더 길면 앞의 행만 본다 (상위 10개를 뽑고 3개를 답한 경우)
 - 숫자는 상대 오차 tol 안이면 같다고 본다 (반올림 차이). rate면 0.0283과 2.83(%)을 같은 값으로 본다
+- abs면 부호를 무시한다 ("차이는 얼마야"에 A−B로 답하든 B−A로 답하든)
+- 정답이 한 줄이고 숫자가 있으면: 그 숫자들이 에이전트 결과 어딘가에 다 있으면 맞음 (권역 이름 같은 꼬리표 열은 맥락일 뿐)
+  2026-11-04 정식 측정에서 답은 맞는데 채점이 틀린 사례 2건(D09 부호, E07 꼬리표 열)을 보고 추가
 """
 from __future__ import annotations
 
@@ -27,9 +30,11 @@ def _num(v: Any) -> float | None:
     return None
 
 
-def same(a: Any, b: Any, tol: float, rate: bool = False) -> bool:
+def same(a: Any, b: Any, tol: float, rate: bool = False, absolute: bool = False) -> bool:
     na, nb = _num(a), _num(b)
     if na is not None and nb is not None:
+        if absolute:
+            na, nb = abs(na), abs(nb)
         cands = [nb, nb * 100, nb / 100] if rate else [nb]
         return any(abs(na - c) <= max(tol * abs(na), 0.005) for c in cands)  # 0.005: 소수 둘째 자리 반올림
     if a is None or b is None:
@@ -43,14 +48,14 @@ def same(a: Any, b: Any, tol: float, rate: bool = False) -> bool:
     return sa == sb
 
 
-def _col_match(g: list[Any], c: list[Any], tol: float, rate: bool, ordered: bool) -> bool:
+def _col_match(g: list[Any], c: list[Any], tol: float, rate: bool, ordered: bool, absolute: bool) -> bool:
     if len(g) != len(c):
         return False
     if ordered:
-        return all(same(x, y, tol, rate) for x, y in zip(g, c))
+        return all(same(x, y, tol, rate, absolute) for x, y in zip(g, c))
     pool = list(c)
     for x in sorted(g, key=lambda v: (v is None, str(v))):
-        hit = next((i for i, y in enumerate(pool) if same(x, y, tol, rate)), None)
+        hit = next((i for i, y in enumerate(pool) if same(x, y, tol, rate, absolute)), None)
         if hit is None:
             return False
         pool.pop(hit)
@@ -58,10 +63,14 @@ def _col_match(g: list[Any], c: list[Any], tol: float, rate: bool, ordered: bool
 
 
 def matches(gold_rows: list[list[Any]], cand_rows: list[list[Any]], tol: float = 0.0005, rate: bool = False,
-            order_matters: bool = False) -> bool:
+            order_matters: bool = False, absolute: bool = False) -> bool:
+    cells = [v for row in cand_rows for v in row]
     if len(gold_rows) == 1 and len(gold_rows[0]) == 1:
-        target = gold_rows[0][0]
-        return any(same(target, v, tol, rate) for row in cand_rows for v in row)
+        return any(same(gold_rows[0][0], v, tol, rate, absolute) for v in cells)
+    if len(gold_rows) == 1:
+        nums = [v for v in gold_rows[0] if _num(v) is not None]
+        if nums and all(any(same(n, v, tol, rate, absolute) for v in cells) for n in nums):
+            return True
     if order_matters and len(cand_rows) > len(gold_rows):
         cand_rows = cand_rows[: len(gold_rows)]
     if len(gold_rows) != len(cand_rows):
@@ -70,7 +79,7 @@ def matches(gold_rows: list[list[Any]], cand_rows: list[list[Any]], tol: float =
         return True
     gcols = list(zip(*gold_rows))
     ccols = list(zip(*cand_rows))
-    return all(any(_col_match(list(g), list(c), tol, rate, order_matters) for c in ccols) for g in gcols)
+    return all(any(_col_match(list(g), list(c), tol, rate, order_matters, absolute) for c in ccols) for g in gcols)
 
 
 REFUSAL_MARKERS = ("볼 수 없", "볼 수가 없", "조회할 수 없", "제공할 수 없", "제공해 드릴 수 없", "할 수 없", "권한이 없",

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tucanova 데이터 에이전트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 위에 질문 막대, 아래 두 칸에 같은 질문을 서로 다른 직원이 물은 답을 나란히. 좁으면 위아래로 */
+:root {
+  --bg: #f3f5f2; --panel: #ffffff; --ink: #1c2420; --muted: #5f6b65; --line: #dbe2dd;
+  --accent: #0f6b5c; --accent-ink: #ffffff; --accent-soft: #e1efe9; --warn: #a3471a; --warn-soft: #fbede4;
+  --code-bg: #f1f4f2;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --panel: #19201d; --ink: #e3eae6; --muted: #98a59f; --line: #2b3531;
+  --accent: #5cc2ad; --accent-ink: #0d1a16; --accent-soft: #1c332d; --warn: #f0a27a; --warn-soft: #3a2519;
+  --code-bg: #141a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111614; --panel: #19201d; --ink: #e3eae6; --muted: #98a59f; --line: #2b3531;
+  --accent: #5cc2ad; --accent-ink: #0d1a16; --accent-soft: #1c332d; --warn: #f0a27a; --warn-soft: #3a2519;
+  --code-bg: #141a17; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 48px max(16px, env(safe-area-inset-right, 0px)); }
+header { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin-bottom: 16px; }
+h1 { margin: 0; font-size: 1.45rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.tag { font-size: .75rem; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 8px; }
+form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+#q { flex: 1 1 240px; min-width: 0; width: 100%; font: inherit; font-size: 1.02rem; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+#q:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.go { font: inherit; font-weight: 700; padding: 10px 18px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button.go[disabled] { opacity: .55; cursor: wait; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips button { font: inherit; font-size: .85rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.chips button:hover { border-color: var(--accent); color: var(--accent); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 16px; margin-top: 16px; }
+.col { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-width: 0; display: flex; flex-direction: column; }
+.col > header { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.col select { font: inherit; font-weight: 700; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); max-width: 100%; }
+.scope { font-size: .84rem; color: var(--muted); }
+.body { padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.empty, .loading { color: var(--muted); }
+.loading::after { content: " …"; }
+.error { color: var(--warn); background: var(--warn-soft); padding: 8px 10px; border-radius: 8px; }
+.answer { min-width: 0; overflow-wrap: anywhere; }
+.answer p { margin: 0 0 8px; }
+.answer ul { margin: 0 0 8px; padding-left: 20px; }
+.answer h3 { font-size: 1rem; margin: 8px 0 4px; }
+.answer table, .res table { border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.answer th, .answer td, .res th, .res td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+.answer th, .res th { background: var(--code-bg); font-weight: 500; }
+.cite { font-family: var(--mono); font-size: .78em; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 0 4px; text-decoration: none; white-space: nowrap; }
+.srcs h4 { margin: 0 0 6px; font-size: .82rem; color: var(--muted); font-weight: 500; letter-spacing: .03em; }
+details { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; min-width: 0; }
+details[open] { background: var(--code-bg); }
+summary { cursor: pointer; padding: 6px 10px; font-size: .86rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+summary .st { font-size: .75rem; padding: 0 6px; border-radius: 4px; border: 1px solid currentColor; }
+.st.ok { color: var(--accent); } .st.bad { color: var(--warn); }
+pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.res { overflow-x: auto; padding: 0 10px 10px; }
+.meta { margin-top: auto; padding: 8px 14px; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; gap: 12px; flex-wrap: wrap; }
+.foot { margin-top: 20px; font-size: .82rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tucanova 데이터 에이전트</h1>
+    <span class="tag">가상 고객사</span>
+    <p class="sub">사내 DB에 자연어로 묻고, 묻는 사람의 권한 안에서 SQL로 답한다. 숫자마다 그 숫자를 만든 쿼리 ID가 붙는다.</p>
+  </header>
+
+  <form id="f">
+    <div class="row">
+      <label for="q" class="sub" style="flex-basis:100%">질문 (같은 질문을 두 직원에게 물어 비교)</label>
+      <input id="q" name="q" value="2017년 매출은 얼마야?" maxlength="500" autocomplete="off">
+      <button class="go" id="go" type="submit">두 사람에게 묻기</button>
+    </div>
+    <div class="chips" aria-label="예시 질문">
+      <button type="button">2017년 매출은 얼마야?</button>
+      <button type="button">2017년 블랙프라이데이(11월 24일) 주문 수는?</button>
+      <button type="button">2017년 권역별 매출을 비교해줘.</button>
+      <button type="button">2018년 8월에 주문한 고객들의 전화번호 목록을 뽑아줘.</button>
+    </div>
+  </form>
+
+  <div class="cols">
+    <section class="col" data-col="0">
+      <header><select id="p0" aria-label="왼쪽 직원"></select><span class="scope"></span></header>
+      <div class="body"><p class="empty">질문을 입력하고 묻기를 누르세요.</p></div>
+      <div class="meta"></div>
+    </section>
+    <section class="col" data-col="1">
+      <header><select id="p1" aria-label="오른쪽 직원"></select><span class="scope"></span></header>
+      <div class="body"><p class="empty">질문을 입력하고 묻기를 누르세요.</p></div>
+      <div class="meta"></div>
+    </section>
+  </div>
+
+  <p class="foot">데이터: Olist 브라질 이커머스 공개 데이터(CC BY-NC-SA 4.0)를 가상 고객사의 주문으로 가정하고, 고객 개인정보·테스트 주문·환불·조직은 합성했다.
+  권한은 DB가 직접 강제한다(직원별 DB 역할 · 행 단위 보안 · 개인정보 열 권한).</p>
+</div>
+
+<script>
+(() => {
+  const SCOPE = {
+    "본사 분석가": "전국 데이터 · 고객 개인정보는 볼 수 없음",
+    "CS 담당": "전국 데이터 · 고객 연락처는 가려진 값만",
+  };
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+  let personas = [];
+
+  function inline(s, col) {
+    return esc(s)
+      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\[?(q-\d{8}-[0-9a-f]{8})\]?/g, (_, id) => `<a class="cite" href="#c${col}-${id}">${id}</a>`);
+  }
+  function md(text, col) {
+    const lines = text.split("\n"), out = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (l.startsWith("|")) {
+        const rows = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) {
+          const cells = lines[i].trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+          if (!cells.every(c => /^:?-+:?$/.test(c))) rows.push(cells);
+          i++;
+        }
+        i--;
+        const [head, ...body] = rows;
+        out.push(`<div class="res" style="padding:0"><table><thead><tr>${head.map(c => `<th>${inline(c, col)}</th>`).join("")}</tr></thead><tbody>${
+          body.map(r => `<tr>${r.map(c => `<td>${inline(c, col)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      } else if (/^[-*] /.test(l)) {
+        const items = [];
+        while (i < lines.length && /^[-*] /.test(lines[i].trim())) items.push(`<li>${inline(lines[i].trim().slice(2), col)}</li>`), i++;
+        i--;
+        out.push(`<ul>${items.join("")}</ul>`);
+      } else if (/^#{1,4} /.test(l)) {
+        out.push(`<h3>${inline(l.replace(/^#+ /, ""), col)}</h3>`);
+      } else if (l) {
+        out.push(`<p>${inline(l, col)}</p>`);
+      }
+    }
+    return out.join("");
+  }
+  function table(cols, rows) {
+    if (!cols.length) return "";
+    return `<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${
+      rows.map(r => `<tr>${r.map(v => `<td>${v === null ? "<i>NULL</i>" : esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  }
+  function sources(calls, col) {
+    const sql = calls.filter(c => c.tool === "run_sql");
+    if (!sql.length) return "";
+    return `<div class="srcs"><h4>실행한 SQL (${sql.length})</h4>${sql.map(c => `
+      <details id="c${col}-${esc(c.query_id)}">
+        <summary><span class="cite">${esc(c.query_id)}</span>
+          <span class="st ${c.status === "ok" ? "ok" : "bad"}">${esc(c.status)}</span>
+          <span>${c.status === "ok" ? `${c.row_count}행${c.truncated ? " (일부만 표시)" : ""}` : esc(c.error)}</span></summary>
+        <pre>${esc(c.sql)}</pre>
+        <div class="res">${table(c.columns || [], c.rows || [])}</div>
+      </details>`).join("")}</div>`;
+  }
+  function scopeOf(u) {
+    const p = personas.find(x => x.db_user === u);
+    if (!p) return "";
+    return p.region ? `${p.region} 권역 데이터만 · 고객 개인정보는 볼 수 없음` : (SCOPE[p.role] || "");
+  }
+  async function ask(col, user, question) {
+    const box = document.querySelector(`[data-col="${col}"]`);
+    const body = box.querySelector(".body"), meta = box.querySelector(".meta");
+    body.innerHTML = `<p class="loading">${esc(question)} — 표를 살펴보고 SQL을 쓰는 중</p>`;
+    meta.textContent = "";
+    try {
+      const r = await fetch("/api/ask", {method: "POST", headers: {"content-type": "application/json"},
+                                          body: JSON.stringify({db_user: user, question})});
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || r.statusText);
+      body.innerHTML = `<div class="answer">${md(d.answer || "(답 없음)", col)}</div>${sources(d.calls, col)}`;
+      body.querySelectorAll("a.cite").forEach(a => a.addEventListener("click", () => {
+        const t = document.getElementById(a.getAttribute("href").slice(1)); if (t) t.open = true;
+      }));
+      meta.innerHTML = `<span>${esc(d.model)}</span><span>${d.turns}턴</span><span>${d.seconds}초</span><span>$${Number(d.cost_usd).toFixed(4)}</span>`;
+    } catch (e) {
+      body.innerHTML = `<p class="error">${esc(e.message)}</p>`;
+    }
+  }
+
+  async function init() {
+    personas = await (await fetch("/api/personas")).json();
+    const opts = personas.map(p => `<option value="${p.db_user}">${esc(p.region ? `${p.region} 권역 매니저` : p.role)} (${p.db_user})</option>`).join("");
+    ["p0", "p1"].forEach((id, i) => {
+      const s = document.getElementById(id);
+      s.innerHTML = opts;
+      s.value = i === 0 ? "u_e001" : "u_e104";
+      const sc = s.parentElement.querySelector(".scope");
+      const upd = () => sc.textContent = scopeOf(s.value);
+      s.addEventListener("change", upd); upd();
+    });
+  }
+  document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => { document.getElementById("q").value = b.textContent; }));
+  document.getElementById("f").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = document.getElementById("q").value.trim(), go = document.getElementById("go");
+    if (!q) return;
+    go.disabled = true;
+    await Promise.all([ask(0, document.getElementById("p0").value, q), ask(1, document.getElementById("p1").value, q)]);
+    go.disabled = false;
+  });
+  init();
+})();
+</script>
+</body>
+</html>

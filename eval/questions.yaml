@@ -198,7 +198,7 @@ questions:
   - id: B05
     category: join
     db_user: u_e001
-    question: 리뷰가 500건 이상인 카테고리 중 평균 리뷰 점수가 가장 낮은 3개(영문명)는?
+    question: 리뷰가 500건 이상인 카테고리 중 평균 리뷰 점수가 가장 낮은 3개(영문명)는? 카테고리 코드가 없는 상품은 빼고.
     checks: [avg_review_score, T9, T8]
     expect: result
     compare: {order_matters: true}
@@ -576,6 +576,7 @@ questions:
     question: 2017년 결제 금액 합계와 판매가+배송비 합계의 차이는 얼마야? (유효 주문 기준)
     checks: [T7]
     expect: result
+    compare: {abs: true}
     gold_by: hoyeol
     gold_sql: |
       -- 결제와 품목은 둘 다 주문 하나에 여러 행 → 한 SQL에서 같이 JOIN하면 행이 불어난다(팬아웃). 따로 더한 뒤 뺀다

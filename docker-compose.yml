@@ -20,6 +20,19 @@ services:
     depends_on:
       db: {condition: service_healthy}
     profiles: [tools]
+  web:
+    build: .
+    command: ["uvicorn", "inhouse.web.app:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql://db:5432/tucanova      # 직원 역할로 접속하므로 사용자 없이
+      TCN_USER_PASSWORD: tucanova-local
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}           # 실행하는 쪽 환경변수에서
+      DAILY_COST_CAP_USD: "0.5"
+      AUDIT_PATH: /data/audit.jsonl
+    ports: ["8000:8000"]
+    volumes: [rawdata:/data]
+    depends_on:
+      db: {condition: service_healthy}
 volumes:
   pgdata:
   rawdata:

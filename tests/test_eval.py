@@ -28,6 +28,17 @@ class TestMatch(unittest.TestCase):
         self.assertFalse(matches(gold, [[100, "SE"]]))  # 행 수가 다름
         self.assertFalse(matches(gold, [[100, "SE"], [51, "S"]]))
 
+    def test_absolute_difference(self):
+        self.assertTrue(matches([[1922.41]], [[-1922.41]], absolute=True))
+        self.assertFalse(matches([[1922.41]], [[-1922.41]]))
+
+    def test_single_row_gold_needs_numbers_not_labels(self):
+        self.assertTrue(matches([["남동부", 3883073.11]], [[3883073.11]]))       # 꼬리표 열 없이 숫자만
+        self.assertFalse(matches([["남동부", 3883073.11]], [[3883073.12 * 2]]))
+        gold = [["Rafael C.", "+55 21 ****-0184"]]                                  # 숫자 없는 한 줄은 그대로 비교
+        self.assertTrue(matches(gold, [["Rafael C.", "+55 21 ****-0184"]]))
+        self.assertFalse(matches(gold, [["Ana S.", "+55 21 ****-0184"]]))
+
     def test_order_matters_for_rankings(self):
         gold = [["a", 3], ["b", 2]]
         self.assertTrue(matches(gold, [["a", 3], ["b", 2]], order_matters=True))
