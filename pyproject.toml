@@ -26,6 +26,6 @@ test = ["httpx>=0.27"]   # FastAPI TestClient
 where = ["src"]
 
 [tool.setuptools.package-data]
-"inhouse.data" = ["schema.sql", "security.sql"]
+"inhouse.data" = ["schema.sql", "security.sql", "docs/*.md"]
 "inhouse.agent" = ["metrics.yaml"]
 "inhouse.web" = ["static/*.html"]

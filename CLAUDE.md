@@ -58,4 +58,7 @@
 - [x] README를 사례 연구로 (고객 문제 → 데이터·함정 → 설계 결정 → 측정 → 배운 것), showcase 카드
 - [~] 2단계 ADR 0004 채택 (2026-11-04, 결정 6개 추천안대로): CS 환불 처리 한 흐름 = 문서 검색(2a) → 환불 제안·사람 승인(2b)
   - 가상 문서 약 30개(함정: 개정 전후·충돌·권한 밖·동의어) · Postgres 키워드 검색(2글자, 측정 후 임베딩) · 문서 조각도 RLS · 인용 문장·시행일 코드 검증 · 에이전트는 propose_refund만, 승인은 사람
-  - [ ] 2a-1 CS팀장 요구사항 · 문서 30개 · docs/doc-notes.md
+  - [x] 2a-1 (2026-11-04): customer-brief 2단계 절(CS 팀장 Renata Oliveira) · 문서 30개 `src/inhouse/data/docs/*.md`(머리말 doc_id·version·status·effective·audience) · 함정 DT1~DT12 `docs/doc-notes.md`
+    - 규정 숫자 초안(호열 검토 대기): 환불 기한 v1 7일(2016-09~2017 주문)·v2 15일(2018~ 주문)·v3 초안 30일 · LATE 1~6일 배송비, 7일+ 배송비+20% · 승인 한도 v1 300/1,500 · v2(2018-07~ 승인일) CS팀장 500·권역 2,000·본사 무제한 · 72시간 만료
+    - 열람: tag all·cs·mgr·hq·rgn:XX·hr. u_e001 27 · 권역 16~18 · CS 22 (판 기준)
+  - [ ] 2a-2 문서 표 + 조각 + RLS + 적재 + 권한 테스트
