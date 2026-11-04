@@ -78,7 +78,7 @@
   - [x] 공개 데모 갱신 (2026-11-04): 호열 ZIP+loader로 Neon 적재(문서 30·조각 96) → 공개 주소 문서 질문 확인(CS·남동부 두 배 보상 거절, CS 보안 보고서 못 찾음, 매출 그대로) · 호열이 비밀값 2개 등록 → load-neon 첫 실행 성공 2분(u_e001 27/88 · u_e104 18/62 · u_e201 22/70, 주문 99,741/68,566), 이후 남동부 매출 3,883,073.11 확인
     - 앞으로는 `.github/workflows/load-neon.yml`(workflow_dispatch, confirm=load, 비밀값 NEON_DATABASE_URL·TCN_USER_PASSWORD)을 Claude가 mcp actions_run_trigger로 실행. 적재는 DB 구조·데이터가 바뀔 때만 (코드만 바뀌면 Render 자동 배포)
   - [x] 2b-1 (2026-11-04): 직원 E002 HQ_OPS Bruno Ferreira·E203 CS_LEAD Renata Oliveira(고정 이름, 난수 안 씀) · 표 rfnd_req·apr_limit · 함수 propose_refund·decide_refund (ADR 0004 '2b-1 구현')
-    - 테스트 14개(제안 검사·남은 한도·중복·자기 승인·승인권자·권역·한도·만료·두 번 실행·동시 승인·직접 쓰기·쓰기 권한 0·run_sql로 못 부름), 총 140개. 슈퍼유저·Neon 흉내 둘 다 통과
+    - 테스트 14개(제안 검사·남은 한도·중복·자기 승인·승인권자·권역·한도·만료·두 번 실행·동시 승인·직접 쓰기·쓰기 권한 0·run_sql로 못 부름), 총 141개. 슈퍼유저·Neon 흉내 둘 다 통과
     - 변형 14개 모두 잡음 (처음 살아남은 2개 = 다른 층이 대신 막음 → 거절 이유·권한 자체 확인으로 조임, FOR UPDATE 빠짐은 동시 승인 테스트 추가로 잡음)
     - Neon 흉내 주의: 슈퍼유저 테스트가 새 역할을 먼저 만들면 neon_owner가 못 고침 → 로컬에선 역할 지우고 neonlike 먼저. 실제 Neon은 적재가 직접 만들어 문제없음
   - [ ] 2b-2 propose_refund 도구 + 웹 승인 화면(대기 목록·승인/거절·감사)
