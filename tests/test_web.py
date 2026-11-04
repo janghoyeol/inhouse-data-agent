@@ -80,6 +80,24 @@ class TestWeb(unittest.TestCase):
         now[0] = dt.datetime(2026, 11, 5, 0, 0, 1)
         self.assertTrue(r.allow("a"))
 
+    def test_agent_error_is_502_with_reason(self):
+        class AuthenticationError(Exception):
+            pass
+
+        def broken(db_user, question):
+            raise AuthenticationError("bad key")
+        c = TestClient(create_app(ask_fn=broken, cost_cap_usd=1.0))
+        r = c.post("/api/ask", json={"db_user": "u_e001", "question": "q"})
+        self.assertEqual(r.status_code, 502)
+        self.assertIn("인증", r.json()["detail"])
+
+    def test_missing_api_key_fails_at_startup(self):
+        import os
+        from unittest import mock
+        env = {"DATABASE_URL": "postgresql://x/y", "TCN_USER_PASSWORD": "p", "ANTHROPIC_API_KEY": " "}
+        with mock.patch.dict(os.environ, env, clear=True), self.assertRaises(RuntimeError):
+            create_app()
+
     def test_audit_api_off_by_default(self):
         self.assertEqual(self.client().get("/api/audit").status_code, 404)
         on = TestClient(create_app(ask_fn=fake_ask, cost_cap_usd=1.0, audit_api=True))

@@ -128,7 +128,9 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
     if ask_fn is None:
         import anthropic
         dsn, pw = os.environ["DATABASE_URL"], os.environ["TCN_USER_PASSWORD"]
-        key = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("TREND_ANTHROPIC_API_KEY")
+        key = (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("TREND_ANTHROPIC_API_KEY") or "").strip()
+        if not key:  # 켜진 척하다 질문마다 500을 내지 않고, 배포 로그에 이유를 남기며 시작을 멈춘다
+            raise RuntimeError("ANTHROPIC_API_KEY 환경변수가 없습니다 (이름·값을 확인하고 다시 배포하세요)")
         client = anthropic.Anthropic(api_key=key)
         model = os.environ.get("MODEL", "claude-haiku-5-5")
         audit_path = os.environ.get("AUDIT_PATH", "data/audit.jsonl")
@@ -164,7 +166,17 @@ def create_app(ask_fn: Callable[..., Any] | None = None, cost_cap_usd: float | N
             raise HTTPException(429, "오늘의 데모 사용량을 다 썼습니다. 내일 다시 시도해 주세요.")
         if not limiter.allow(RateLimit.client_ip(request)):
             raise HTTPException(429, "질문이 너무 잦습니다. 잠시 뒤에 다시 시도해 주세요.")
-        ans = ask_fn(body.db_user, question)
+        try:
+            ans = ask_fn(body.db_user, question)
+        except Exception as e:  # Claude API 오류(키·크레딧·과부하) 등. 원인 종류만 보여주고 자세한 건 서버 로그로
+            import logging
+            logging.getLogger("inhouse.web").exception("ask failed")
+            name = type(e).__name__
+            msg = ("Claude API 인증에 실패했습니다 (서버 설정 문제)." if "Authentication" in name or "Permission" in name
+                   else "Claude API가 혼잡하거나 사용량 한도에 걸렸습니다. 잠시 뒤 다시 시도해 주세요." if name in
+                   ("RateLimitError", "OverloadedError", "InternalServerError", "APIConnectionError", "APITimeoutError")
+                   else f"답을 만드는 중 오류가 났습니다 ({name}).")
+            raise HTTPException(502, msg)
         guard.add(ans.cost_usd)
         return {"db_user": body.db_user, "answer": ans.text, "cited": ans.cited, "model": ans.model,
                 "turns": ans.turns, "cost_usd": ans.cost_usd, "seconds": ans.seconds,
