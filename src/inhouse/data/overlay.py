@@ -130,6 +130,11 @@ def _employees(rng):
         first, last = rng.choice(FIRST), rng.choice(LAST)
         out.append({"emp_no": no, "emp_nm": f"{first} {last}", "role_cd": role, "rgn_cd": rgn,
                     "email": f"{_ascii(first)}.{_ascii(last)}@example.org"})
+    # 2단계 승인권자 (ADR 0004). 이름은 사내 문서(ORG-001)와 맞추고, 난수를 쓰지 않아 기존 직원·데이터가 그대로다
+    for no, role, name in [("E002", "HQ_OPS", "Bruno Ferreira"), ("E203", "CS_LEAD", "Renata Oliveira")]:
+        first, last = name.split()
+        out.append({"emp_no": no, "emp_nm": name, "role_cd": role, "rgn_cd": None,
+                    "email": f"{first.lower()}.{last.lower()}@example.org"})
     return pd.DataFrame(out)
 
 

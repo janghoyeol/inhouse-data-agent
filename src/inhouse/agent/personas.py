@@ -7,6 +7,8 @@ PERSONAS: dict[str, dict[str, str | None]] = {"u_e001": {"role": "본사 분석�
 for i, (cd, (_, ko, _ufs)) in enumerate(REGIONS.items(), 1):
     PERSONAS[f"u_e1{i:02d}"] = {"role": f"{ko} 권역 매니저", "region": cd}
 PERSONAS.update({"u_e201": {"role": "CS 담당", "region": None}, "u_e202": {"role": "CS 담당", "region": None}})
+# 2단계 승인권자 (ADR 0004)
+PERSONAS.update({"u_e002": {"role": "본사 운영책임자", "region": None}, "u_e203": {"role": "CS 팀장", "region": None}})
 
 
 def describe(db_user: str) -> str:
@@ -14,5 +16,5 @@ def describe(db_user: str) -> str:
     if p is None:
         return "알 수 없는 사용자"
     scope = "자기 권역 데이터만 보입니다" if p["region"] else "전국 데이터가 보입니다"
-    pii = "고객 연락처는 마스킹 뷰(v_cust_contact)로만 볼 수 있습니다" if p["role"] == "CS 담당" else "고객 개인정보는 볼 수 없습니다"
+    pii = "고객 연락처는 마스킹 뷰(v_cust_contact)로만 볼 수 있습니다" if p["role"] in ("CS 담당", "CS 팀장") else "고객 개인정보는 볼 수 없습니다"
     return f"{p['role']} ({db_user}). {scope}. {pii}."

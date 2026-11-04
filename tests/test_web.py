@@ -27,7 +27,8 @@ class TestWeb(unittest.TestCase):
         self.assertIn("Tucanova 데이터 에이전트", c.get("/").text)
         ps = c.get("/api/personas").json()
         self.assertEqual({p["db_user"] for p in ps},
-                         {"u_e001", "u_e101", "u_e102", "u_e103", "u_e104", "u_e105", "u_e201", "u_e202"})
+                         {"u_e001", "u_e002", "u_e101", "u_e102", "u_e103", "u_e104", "u_e105", "u_e201", "u_e202",
+                          "u_e203"})
         self.assertEqual(next(p for p in ps if p["db_user"] == "u_e104")["region"], "남동부")
 
     def test_ask_returns_answer_with_sql_sources(self):

@@ -107,7 +107,7 @@ class TestOverlay(unittest.TestCase):
 
     def test_employees_cover_roles_and_regions(self):
         e = self.t["emp"]
-        self.assertEqual(set(e.role_cd), {"HQ_ANALYST", "RGN_MGR", "CS"})
+        self.assertEqual(set(e.role_cd), {"HQ_ANALYST", "HQ_OPS", "RGN_MGR", "CS", "CS_LEAD"})
         self.assertEqual(set(e[e.role_cd == "RGN_MGR"].rgn_cd), {"N", "NE", "CO", "SE", "S"})
         self.assertTrue(e[e.role_cd != "RGN_MGR"].rgn_cd.isna().all())
 

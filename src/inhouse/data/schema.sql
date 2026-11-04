@@ -3,7 +3,8 @@
 -- 카테고리(prd.ctgr_cd → ctgr)에는 일부러 FK가 없다: 원본에 번역 표에 없는 카테고리가 있다.
 
 DROP VIEW IF EXISTS v_cust_contact;
-DROP TABLE IF EXISTS doc_chunk, doc, db_user, rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
+DROP SEQUENCE IF EXISTS rfnd_no_seq;
+DROP TABLE IF EXISTS rfnd_req, apr_limit, doc_chunk, doc, db_user, rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
     cd_ord_stat, st, rgn CASCADE;
 
 CREATE TABLE rgn (
@@ -201,3 +202,38 @@ CREATE TABLE doc_chunk (
 );
 CREATE INDEX doc_chunk_tsv ON doc_chunk USING gin (tsv);
 COMMENT ON TABLE doc_chunk IS '사내 문서 조각 (## 절 단위)';
+
+-- 2단계 환불 제안·승인 (ADR 0004 결정 6). 쓰기는 propose_refund·decide_refund 함수로만 (security.sql)
+CREATE TABLE rfnd_req (
+    req_no        bigserial PRIMARY KEY,
+    ord_no        text NOT NULL REFERENCES ord,
+    rsn_cd        text NOT NULL CHECK (rsn_cd IN ('DMG', 'WRONG', 'LATE')),
+    amt           numeric(12, 2) NOT NULL CHECK (amt > 0),
+    basis         text NOT NULL,
+    status        text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'executed', 'rejected', 'expired')),
+    proposed_by   name NOT NULL,
+    proposed_at   timestamptz NOT NULL DEFAULT now(),
+    expires_at    timestamptz NOT NULL,
+    decided_by    name,
+    decided_at    timestamptz,
+    decision_note text,
+    rfnd_no       int REFERENCES rfnd
+);
+COMMENT ON TABLE rfnd_req IS '환불 제안 (제안 → 승인·거절 → 실행)';
+COMMENT ON COLUMN rfnd_req.status IS 'pending 대기 · executed 승인되어 환불 기록 생성 · rejected 거절 · expired 72시간 만료';
+COMMENT ON COLUMN rfnd_req.basis IS '근거 (규정 판·조항, 인용한 문서 조각)';
+COMMENT ON COLUMN rfnd_req.rfnd_no IS '실행되어 생긴 환불 기록 (rfnd)';
+
+-- 환불 승인 한도 (POL-APR-001). 적용 기준일은 승인하는 날 (현지). max_amt NULL = 한도 없음
+CREATE TABLE apr_limit (
+    role_cd  text NOT NULL,
+    eff_from date NOT NULL,
+    eff_to   date,
+    max_amt  numeric(12, 2),
+    PRIMARY KEY (role_cd, eff_from)
+);
+COMMENT ON TABLE apr_limit IS '환불 승인 한도 (승인일 기준, POL-APR-001)';
+INSERT INTO apr_limit VALUES
+    ('CS_LEAD', '2016-09-01', '2018-06-30', 300), ('CS_LEAD', '2018-07-01', NULL, 500),
+    ('RGN_MGR', '2016-09-01', '2018-06-30', 1500), ('RGN_MGR', '2018-07-01', NULL, 2000),
+    ('HQ_OPS', '2016-09-01', NULL, NULL);
