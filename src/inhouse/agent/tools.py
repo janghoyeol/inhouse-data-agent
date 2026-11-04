@@ -91,6 +91,8 @@ class Toolbox:
                 return self.read_doc(args["doc_key"])
         except KeyError as e:
             return {"error": f"인자가 빠졌습니다: {e}"}
+        except psycopg.Error as e:  # 문서 표가 아직 없는 DB 등. 모델에게 이유를 돌려주고 대화는 이어간다
+            return {"error": f"DB 오류: {str(e).splitlines()[0]}"}
         return {"error": f"알 수 없는 도구: {name}"}
 
     def _connect(self):
