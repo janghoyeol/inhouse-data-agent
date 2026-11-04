@@ -16,7 +16,7 @@ import pandas as pd
 import psycopg
 from psycopg import sql
 
-from . import overlay, transform
+from . import docs, overlay, transform
 
 # FK 순서
 ORDER = ["rgn", "st", "cd_ord_stat", "slr", "ctgr", "prd", "geo_zip", "cust", "ord", "ord_item", "ord_pay",
@@ -46,11 +46,13 @@ def load(tables: dict[str, pd.DataFrame], dsn: str, log=print, user_password: st
             t0 = time.time()
             _copy(cur, name, tables[name])
             log(f"  {name}: {len(tables[name]):,}행 ({time.time() - t0:.1f}s)")
+        n_doc, n_chunk = docs.load_docs(cur)
+        log(f"  문서: {n_doc}개, 조각 {n_chunk}개")
         cur.execute(_sql("security.sql"))
         if user_password:
             for (role,) in cur.execute("SELECT db_role FROM db_user ORDER BY 1").fetchall():
                 cur.execute(sql.SQL("ALTER ROLE {} PASSWORD {}").format(sql.Identifier(role), sql.Literal(user_password)))
-        log("  권한: 역할·RLS·마스킹 뷰 적용")
+        log("  권한: 역할·RLS·마스킹 뷰·문서 권한 적용")
         conn.commit()
         conn.autocommit = True
         cur.execute("ANALYZE")

@@ -61,4 +61,9 @@
   - [x] 2a-1 (2026-11-04): customer-brief 2단계 절(CS 팀장 Renata Oliveira) · 문서 30개 `src/inhouse/data/docs/*.md`(머리말 doc_id·version·status·effective·audience) · 함정 DT1~DT12 `docs/doc-notes.md`
     - 규정 숫자 초안(호열 검토 대기): 환불 기한 v1 7일(2016-09~2017 주문)·v2 15일(2018~ 주문)·v3 초안 30일 · LATE 1~6일 배송비, 7일+ 배송비+20% · 승인 한도 v1 300/1,500 · v2(2018-07~ 승인일) CS팀장 500·권역 2,000·본사 무제한 · 72시간 만료
     - 열람: tag all·cs·mgr·hq·rgn:XX·hr. u_e001 27 · 권역 16~18 · CS 22 (판 기준)
-  - [ ] 2a-2 문서 표 + 조각 + RLS + 적재 + 권한 테스트
+  - [x] 2a-2 (2026-11-04): `inhouse.data.docs`(머리말 파싱·## 절 조각·머리말 조각 #0·한국어 2글자 토큰 → tsvector 문자열 직접) · 표 doc/doc_chunk(GIN) · `tcn_doc_tags()`(session_user, SECURITY DEFINER) + RLS(doc: audience && 태그, 조각: doc 따라감) · load에 문서 적재
+    - 테스트 14개 추가(오프라인 7 + DB 7: 직원 8명 보이는 문서 = 머리말로 따로 계산한 값, HR 아무도 못 봄, 우회 SET ROLE·set_config·row_security off·쓰기·pg_stats, 매핑 없는 계정 0), 총 106개. 슈퍼유저·Neon 흉내 둘 다 통과
+    - 변형 5개(정책 항상 참·조각 RLS 끔·CS에 mgr 태그·권역 태그 빠짐·SECURITY DEFINER 빠짐) 모두 테스트가 잡음. current_user로 바꾸는 변형은 SET ROLE이 막혀 구분 불가(같은 동작)
+    - 전체 적재 48.7초, 조각 96개. u_e001 27문서/88조각 · u_e104 18/62 · u_e201 22/70
+    - 공개 데모(Neon)는 아직 옛 적재 → 2a 끝나면 호열이 loader 다시 실행
+  - [ ] 2a-3 search_docs 도구 + 인용 검증

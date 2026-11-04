@@ -3,7 +3,7 @@
 -- 카테고리(prd.ctgr_cd → ctgr)에는 일부러 FK가 없다: 원본에 번역 표에 없는 카테고리가 있다.
 
 DROP VIEW IF EXISTS v_cust_contact;
-DROP TABLE IF EXISTS db_user, rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
+DROP TABLE IF EXISTS doc_chunk, doc, db_user, rfnd, rvw, ord_pay, ord_item, ord, cust, mon_sls_smry_old, emp, geo_zip, prd, ctgr, slr,
     cd_ord_stat, st, rgn CASCADE;
 
 CREATE TABLE rgn (
@@ -168,3 +168,36 @@ CREATE TABLE mon_sls_smry_old (
     PRIMARY KEY (yyyymm, uf)
 );
 COMMENT ON TABLE mon_sls_smry_old IS '월별 매출 요약 (구 시스템)';
+
+-- 2단계 사내 문서 (ADR 0004). 조각마다 검색용 tsvector (한국어 2글자 토큰, inhouse.data.docs)
+CREATE TABLE doc (
+    doc_key     text PRIMARY KEY,           -- 'POL-REF-001@v2'
+    doc_id      text NOT NULL,
+    version     int NOT NULL,
+    title       text NOT NULL,
+    owner       text NOT NULL,
+    status      text NOT NULL CHECK (status IN ('active', 'superseded', 'draft')),
+    eff_from    date NOT NULL,
+    eff_to      date,
+    supersedes  text,
+    approval_no text,
+    audience    text[] NOT NULL,
+    body        text NOT NULL,
+    UNIQUE (doc_id, version)
+);
+COMMENT ON TABLE doc IS '사내 문서 (판 단위)';
+COMMENT ON COLUMN doc.status IS 'active 시행 중 · superseded 대체됨 · draft 초안(효력 없음)';
+COMMENT ON COLUMN doc.eff_from IS '시행 시작일. 무엇의 날짜인지(주문일·승인일)는 본문의 적용 기준일';
+COMMENT ON COLUMN doc.approval_no IS '권역 공지의 본사 승인 번호. 없으면 본사 규정과 다른 내용은 효력 없음';
+COMMENT ON COLUMN doc.audience IS '열람 범위 태그 (all·cs·mgr·hq·rgn:XX·hr)';
+
+CREATE TABLE doc_chunk (
+    chunk_id text PRIMARY KEY,              -- 'POL-REF-001@v2#3'
+    doc_key  text NOT NULL REFERENCES doc,
+    sec_no   int NOT NULL,
+    heading  text NOT NULL,
+    content  text NOT NULL,
+    tsv      tsvector NOT NULL
+);
+CREATE INDEX doc_chunk_tsv ON doc_chunk USING gin (tsv);
+COMMENT ON TABLE doc_chunk IS '사내 문서 조각 (## 절 단위)';

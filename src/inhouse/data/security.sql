@@ -88,3 +88,19 @@ FROM cust
 WHERE uf IN (SELECT tcn_visible_uf());
 COMMENT ON VIEW v_cust_contact IS '고객 연락처 (마스킹, CS 전용)';
 GRANT SELECT ON v_cust_contact TO r_cs;
+
+-- 2단계 문서 권한 (ADR 0004 결정 4): 문서의 열람 태그와 직원의 태그가 겹치면 보인다. 판단은 session_user.
+-- 본사 분석가 = all·hq·mgr, 권역 매니저 = all·mgr·rgn:자기 권역, CS = all·cs, 매핑 없는 계정 = 없음
+CREATE OR REPLACE FUNCTION tcn_doc_tags() RETURNS text[]
+    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+    SELECT coalesce((
+        SELECT CASE e.role_cd WHEN 'HQ_ANALYST' THEN ARRAY['all', 'hq', 'mgr']
+                              WHEN 'RGN_MGR' THEN ARRAY['all', 'mgr', 'rgn:' || e.rgn_cd]
+                              WHEN 'CS' THEN ARRAY['all', 'cs'] END
+        FROM db_user d JOIN emp e USING (emp_no) WHERE d.db_role = session_user), '{}')
+$$;
+GRANT SELECT ON doc, doc_chunk TO r_agent;
+ALTER TABLE doc ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p_tag ON doc FOR SELECT TO r_agent USING (audience && tcn_doc_tags());
+ALTER TABLE doc_chunk ENABLE ROW LEVEL SECURITY;
+CREATE POLICY p_tag ON doc_chunk FOR SELECT TO r_agent USING (doc_key IN (SELECT doc_key FROM doc));
