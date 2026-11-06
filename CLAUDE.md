@@ -110,3 +110,6 @@
   - [x] 이력서 새로 (11-05, 포트폴리오 기반): Claude Docs 문서 https://claude.ai/artifact/5oshvkBQpVQV8nDq5RThn3 를 포트폴리오와 같은 내용·말투(짧은 줄 + →, 음슴체, ABOUT만 ~합니다)로 다시 씀, 증명사진 넣음, '바뀐 점' 절 지움, 제목 'AI 개발자 · FDE'
     - 제출용 PDF = 포트폴리오 디자인의 A4 2쪽(HTML → Playwright). 1쪽 머리·ABOUT·핵심 역량·inhouse·korea-data-mcp / 2쪽 trend·nsmc·이전 프로젝트·학력·자격·스킬. 문서에서 바로 내보낸 PDF는 사진 빠지고 4쪽 → 쓰지 않음
     - 문서를 고치면 PDF도 다시 만들어야 함. 슬라이드·이력서 PDF의 원본 HTML·스크립트는 세션 scratchpad(`deck/`, `pdfbuild/`, `resume/`)에만 있음 — 연락처가 들어 있어 공개 레포에 안 넣음. 다음 세션에서 고치려면 슬라이드는 Artifact read로, 이력서 PDF는 문서 내용으로 다시 만들기
+- [x] GitHub 정리 (2026-11-06): 프로필 README(janghoyeol/janghoyeol)를 포트폴리오 말투·내용으로 새로 · nsmc README 새로 작성(없었음) · trend-agent README 맨 위에 데모·결과 78% · showcase README 새로
+  - 호열이 직접: 고정 저장소 6개(inhouse·mcp·trend·nsmc·showcase·tasktriage), 저장소 About 설명·Website 입력 (표에서 복사하면 숨은 문자로 'control characters' 오류 → 한 줄씩 복사)
+  - 이 세션은 저장소 설정(설명·토픽·공개 범위) 변경이 프록시로 막힘. 남은 권장: 2019~2023 옛 공개 저장소 비공개/보관은 호열 판단
