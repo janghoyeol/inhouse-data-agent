@@ -113,3 +113,10 @@
 - [x] GitHub 정리 (2026-11-06): 프로필 README(janghoyeol/janghoyeol)를 포트폴리오 말투·내용으로 새로 · nsmc README 새로 작성(없었음) · trend-agent README 맨 위에 데모·결과 78% · showcase README 새로
   - 호열이 직접: 고정 저장소 6개(inhouse·mcp·trend·nsmc·showcase·tasktriage), 저장소 About 설명·Website 입력 (표에서 복사하면 숨은 문자로 'control characters' 오류 → 한 줄씩 복사)
   - 이 세션은 저장소 설정(설명·토픽·공개 범위) 변경이 프록시로 막힘. 남은 권장: 2019~2023 옛 공개 저장소 비공개/보관은 호열 판단
+- [~] SQLD 준비 (2026-11-09 시작, 목표 2027년 3월 첫 회차, 접수는 2월 첫 주쯤 → 일정 공지 확인). 자격증 추천: SQLD → ADsP(SQLD 뒤에, 3과목 통계) → AWS SAA. Claude 인증은 파트너사만
+  - 계획: 1단계 11/10~12/7 기초(실행 순서·GROUP BY/HAVING·NULL·JOIN·서브쿼리·집합) · 2단계 12/8~1/4 활용(윈도우·ROLLUP/CUBE·계층형·ROWNUM·DDL/DML/TCL/DCL) · 3단계 1월 모델링 · 4단계 2월 노랭이·기출 90분. 시험은 Oracle 문법 → Oracle Live SQL
+  - 진단 12문항(단계별 초·중·상): 3/12 (LEFT JOIN 행 수·DENSE_RANK 추리·2정규형). 실행 순서·NULL 집계·엔터티·WHERE vs HAVING 틀림, 2·4단계는 아직 안 배움
+  - 방식: Tucanova DB(DBeaver u_e001)로 '예상 먼저 → 실행' 문제, 하루 4문제 정도
+  - 1주차 1일 W1-1~4 실행 순서 ✅ (별칭은 WHERE·HAVING 불가, ORDER BY 가능 / HAVING은 스스로 검색해 찾음 / GROUP BY 규칙 이해) + 질문: WHERE 서브쿼리 실행 순서, 서브쿼리 안 ORDER BY 불가(Oracle)
+  - 1주차 2일 W1-5~8 NULL과 집계: 5·6 ✅, 7 ❌(sum÷count(*) = avg(coalesce) — 분모 차이) → 설명 후 이해, 8 반(NULL도 한 그룹, count(열)=0)
+  - **다음: 1주차 3일 JOIN 종류(INNER·LEFT·FULL OUTER·CROSS)**. 그 뒤 서브쿼리·집합 연산, 연습 문제 P03~P05도 1단계 안에
