@@ -119,4 +119,10 @@
   - 방식: Tucanova DB(DBeaver u_e001)로 '예상 먼저 → 실행' 문제, 하루 4문제 정도
   - 1주차 1일 W1-1~4 실행 순서 ✅ (별칭은 WHERE·HAVING 불가, ORDER BY 가능 / HAVING은 스스로 검색해 찾음 / GROUP BY 규칙 이해) + 질문: WHERE 서브쿼리 실행 순서, 서브쿼리 안 ORDER BY 불가(Oracle)
   - 1주차 2일 W1-5~8 NULL과 집계: 5·6 ✅, 7 ❌(sum÷count(*) = avg(coalesce) — 분모 차이) → 설명 후 이해, 8 반(NULL도 한 그룹, count(열)=0)
-  - **다음: 1주차 3일 JOIN 종류(INNER·LEFT·FULL OUTER·CROSS)**. 그 뒤 서브쿼리·집합 연산, 연습 문제 P03~P05도 1단계 안에
+  - 1주차 3일 JOIN(11-10): INNER<LEFT ✅, ctgr 쪽 짝 없음 0행이 답인 걸 처음엔 이해 못함 → 그림으로 설명, FULL = LEFT + RIGHT − INNER, CROSS 5×8=40 ✅, (+) 맛보기
+  - 1주차 4일 서브쿼리(11-10): 평균 이상 비율은 분포 따라 다름(스스로 추론) · = 다중행 오류 → IN · EXISTS는 행 유무만(select 1 바꿔 실험) · NOT IN + NULL = 0(where null 실험으로 빈 목록 71 발견)
+  - 1차 실전 12문항 9/12 (틀림: GROUP BY 열 2개는 괜찮음 · (+) 방향 · NOT IN NULL)
+  - 1주차 5일 집합 연산(11-11): UNION ALL 102,566 / UNION 27 / INTERSECT 23 / 고객만 4·판매자만 0 · 열 개수 규칙(가 오류) · NULL union = 1행 · count(*) vs count(열) 다시 확인
+  - 복습 10문항 13분 8/10 (틀림: MINUS 표 순서 착각, GROUP BY 결과 행 수를 count(*)와 혼동). 6번은 맞았지만 'NULL을 0 취급'으로 오해 → NULL+1=NULL 정정
+  - **다음: 약점 2개(GROUP BY 결과 행 수, NULL 계산) Tucanova로 한 문제씩 → 연습 P03~P05 → 2주차(윈도우·ROLLUP 등)**
+  - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
