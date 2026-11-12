@@ -124,5 +124,9 @@
   - 1차 실전 12문항 9/12 (틀림: GROUP BY 열 2개는 괜찮음 · (+) 방향 · NOT IN NULL)
   - 1주차 5일 집합 연산(11-11): UNION ALL 102,566 / UNION 27 / INTERSECT 23 / 고객만 4·판매자만 0 · 열 개수 규칙(가 오류) · NULL union = 1행 · count(*) vs count(열) 다시 확인
   - 복습 10문항 13분 8/10 (틀림: MINUS 표 순서 착각, GROUP BY 결과 행 수를 count(*)와 혼동). 6번은 맞았지만 'NULL을 0 취급'으로 오해 → NULL+1=NULL 정정
-  - **다음: 약점 2개(GROUP BY 결과 행 수, NULL 계산) Tucanova로 한 문제씩 → 연습 P03~P05 → 2주차(윈도우·ROLLUP 등)**
+  - 11-12: ADsP 교재·강의 추천(민트책 + 인프런 노랭이 풀이·ADsP 강의, 호열 '인지만') · ADsP 형식 설명 + 예제 5(1·2 추론으로 맞힘, 3과목 통계·R 출력은 처음)
+  - 11-12 약점 복습: W2-0a GROUP BY 줄 수 ✅(27·최소27/최대54·합=99,471) · W2-0b NULL 계산 예상 ✅, 단 'sum 결과 0' 오해 한 번 더 → 더할 게 없으면 sum/avg는 NULL, count는 0
+  - **연습 P03~P05 완료** → P01~P05 전부 끝: P03 결제 수단별 평균 ✅(SELECT에 group 열·ORDER BY 별칭·취소 조건) · P04 지연율 ✅ 10.95… (WITH 스스로 사용, WHERE=분모·filter=분자, **문장 애매함 지적: '2017년 배송 완료'는 도착일로도 읽힘 → practice.yaml 문장 고침**, 도착일 기준과 비교해 순위 바뀜 확인) · P05 객단가 134.70 ✅ (배송비는 빼는 게 아니라 안 더함, item_seq는 순번, count(distinct)→134.74, left join으로 품목 없는 주문 포함→134.70)
+  - 호열: WITH를 이제 스스로 씀(강요 아님). JOIN 이름: INNER/OUTER 생략 규칙 설명
+  - **다음: 2주차 SQL 활용(윈도우 함수부터)**. 공부 기록 파일 practice.md 추가해 호열에게 줌
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
