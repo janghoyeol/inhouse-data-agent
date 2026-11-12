@@ -128,5 +128,7 @@
   - 11-12 약점 복습: W2-0a GROUP BY 줄 수 ✅(27·최소27/최대54·합=99,471) · W2-0b NULL 계산 예상 ✅, 단 'sum 결과 0' 오해 한 번 더 → 더할 게 없으면 sum/avg는 NULL, count는 0
   - **연습 P03~P05 완료** → P01~P05 전부 끝: P03 결제 수단별 평균 ✅(SELECT에 group 열·ORDER BY 별칭·취소 조건) · P04 지연율 ✅ 10.95… (WITH 스스로 사용, WHERE=분모·filter=분자, **문장 애매함 지적: '2017년 배송 완료'는 도착일로도 읽힘 → practice.yaml 문장 고침**, 도착일 기준과 비교해 순위 바뀜 확인) · P05 객단가 134.70 ✅ (배송비는 빼는 게 아니라 안 더함, item_seq는 순번, count(distinct)→134.74, left join으로 품목 없는 주문 포함→134.70)
   - 호열: WITH를 이제 스스로 씀(강요 아님). JOIN 이름: INNER/OUTER 생략 규칙 설명
-  - **다음: 2주차 SQL 활용(윈도우 함수부터)**. 공부 기록 파일 practice.md 추가해 호열에게 줌
+  - 11-12 실전 10문항 7/10 (틀림: 0줄일 때 SUM=NULL **4번째** · GROUP BY+HAVING 줄 수 · ANY/ALL 모름) → 'COUNT는 몇 개라 0, SUM·AVG·MAX·MIN은 얼마라 NULL' + NULL 3단계 풀이법·연습 4문제
+  - 노랭이 질문(p39 15~20): 문자 함수 LENGTH·REPLACE·CHR(10)로 줄 수 세기(5) · 날짜 + 1/24/(60/10) = 10분, TO_DATE·TO_CHAR, mm vs mi · CASE 두 형태(검색형/단순형)·DECODE 순서·IS는 NULL에만 · SUM(CASE … THEN 1 END) 집계 + NVL/ISNULL, else 1 함정 · NULLIF vs NVL/NVL2/COALESCE/ISNULL/IFNULL (COALESCE를 '참이면 왼쪽'으로 오해 → NULL 아닌 첫 값). 19번은 맞힘
+  - **다음 세션 첫 순서: 호열이 '아예 몰랐던 것'으로 문제 만들기** = 문자 함수(LENGTH·REPLACE·SUBSTR·INSTR·TRIM·LPAD) · 날짜 계산(+1, 1/24, MONTHS_BETWEEN·ADD_MONTHS, TO_CHAR 형식 mm/mi/hh24) · CASE 단순형/검색형·DECODE · SUM(CASE) 피벗 · NULL 함수 5종(NULLIF·NVL2·COALESCE) · ANY/ALL. 그다음 2주차 윈도우 함수
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
