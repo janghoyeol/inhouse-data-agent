@@ -131,4 +131,6 @@
   - 11-12 실전 10문항 7/10 (틀림: 0줄일 때 SUM=NULL **4번째** · GROUP BY+HAVING 줄 수 · ANY/ALL 모름) → 'COUNT는 몇 개라 0, SUM·AVG·MAX·MIN은 얼마라 NULL' + NULL 3단계 풀이법·연습 4문제
   - 노랭이 질문(p39 15~20): 문자 함수 LENGTH·REPLACE·CHR(10)로 줄 수 세기(5) · 날짜 + 1/24/(60/10) = 10분, TO_DATE·TO_CHAR, mm vs mi · CASE 두 형태(검색형/단순형)·DECODE 순서·IS는 NULL에만 · SUM(CASE … THEN 1 END) 집계 + NVL/ISNULL, else 1 함정 · NULLIF vs NVL/NVL2/COALESCE/ISNULL/IFNULL (COALESCE를 '참이면 왼쪽'으로 오해 → NULL 아닌 첫 값). 19번은 맞힘
   - **다음 세션 첫 순서: 호열이 '아예 몰랐던 것'으로 문제 만들기** = 문자 함수(LENGTH·REPLACE·SUBSTR·INSTR·TRIM·LPAD) · 날짜 계산(+1, 1/24, MONTHS_BETWEEN·ADD_MONTHS, TO_CHAR 형식 mm/mi/hh24) · CASE 단순형/검색형·DECODE · SUM(CASE) 피벗 · NULL 함수 5종(NULLIF·NVL2·COALESCE) · ANY/ALL. 그다음 2주차 윈도우 함수
+  - 11-13 노랭이 질문: CASE로 정렬(THEN 0은 숫자 0, 오름차순이면 맨 앞 → 999, 100) · GROUP BY 있으면 ORDER BY도 GROUP BY 열/집계만(없으면 표의 아무 열 OK), ORDER BY count(*) 가능 · 1/12일 = 2시간(1/N일 = 24÷N시간) · NVL 개념, NVL vs COALESCE(값 개수·표준·멈춤)
+  - **진행 방식(11-13 호열): 노랭이 50번까지 혼자 풀고(현재 31번), 중간 질문은 바로 설명 → 50번 다 풀면 틀린·질문한 것 기반으로 문제 출제.** 미뤄 둔 '아예 몰랐던 것' 문제(문자·날짜 함수·CASE/DECODE·SUM(CASE)·NULL 함수·ANY/ALL)도 그때 합쳐서
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
