@@ -133,4 +133,9 @@
   - **다음 세션 첫 순서: 호열이 '아예 몰랐던 것'으로 문제 만들기** = 문자 함수(LENGTH·REPLACE·SUBSTR·INSTR·TRIM·LPAD) · 날짜 계산(+1, 1/24, MONTHS_BETWEEN·ADD_MONTHS, TO_CHAR 형식 mm/mi/hh24) · CASE 단순형/검색형·DECODE · SUM(CASE) 피벗 · NULL 함수 5종(NULLIF·NVL2·COALESCE) · ANY/ALL. 그다음 2주차 윈도우 함수
   - 11-13 노랭이 질문: CASE로 정렬(THEN 0은 숫자 0, 오름차순이면 맨 앞 → 999, 100) · GROUP BY 있으면 ORDER BY도 GROUP BY 열/집계만(없으면 표의 아무 열 OK), ORDER BY count(*) 가능 · 1/12일 = 2시간(1/N일 = 24÷N시간) · NVL 개념, NVL vs COALESCE(값 개수·표준·멈춤)
   - **진행 방식(11-13 호열): 노랭이 50번까지 혼자 풀고(현재 31번), 중간 질문은 바로 설명 → 50번 다 풀면 틀린·질문한 것 기반으로 문제 출제.** 미뤄 둔 '아예 몰랐던 것' 문제(문자·날짜 함수·CASE/DECODE·SUM(CASE)·NULL 함수·ANY/ALL)도 그때 합쳐서
+  - 11-13~14 노랭이 1~50 완료. 질문: cnt 별칭(AS 생략)·LIKE 조인·값은 대소문자 구분 / 순수 관계 연산자 셀·프·조·디(UPDATE 오답, 관계대수 SELECT=WHERE) / FULL·SELF·NATURAL·USING·CROSS / '가장 적절'은 요청만큼(FULL은 넘침)
+  - 호열 약점(자기 진단): **지문이 긴 문제** (표+기준 SQL+긴 보기 4개: 동일한 것·실행 결과·다른 하나)
+  - 긴 지문 10문항(EMP·DEPT 공용 표, sqlite로 정답 검증) 40분 7/10 — 틀림 NOT IN+NULL(3번째) · UNION/UNION ALL 반대로 기억(2번째) · USING(E.deptno) 오류·NATURAL도 INNER. 질문: CASE WHEN 조건 UNKNOWN→ELSE, NULLIF 다르면 첫 값, NVL2, ORDER BY 기본 ASC. 요령: 보기끼리 다른 부분만 밑줄(호열이 메모장 diff로 스스로 함)
+  - 추가 8문항 5/8 — 틀림 3(LEFT JOIN 중복·DISTINCT 필요) · 4(UNION ALL = 두 표 전부 쌓기 7+4=11, DEPT 쪽 중복을 지움) · 5(INTERSECT 잊음). EXISTS/IN/NOT EXISTS는 NULL 영향 없고 NOT IN만 망가짐, 집합 연산에서 NULL은 그냥 값
+  - **다음: 집합 연산 4종(UNION·UNION ALL·INTERSECT·MINUS) 짧게 다시 + 긴 지문 문제 계속, 그다음 2주차 윈도우 함수**
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
