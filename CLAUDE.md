@@ -138,5 +138,5 @@
   - 긴 지문 10문항(EMP·DEPT 공용 표, sqlite로 정답 검증) 40분 7/10 — 틀림 NOT IN+NULL(3번째) · UNION/UNION ALL 반대로 기억(2번째) · USING(E.deptno) 오류·NATURAL도 INNER. 질문: CASE WHEN 조건 UNKNOWN→ELSE, NULLIF 다르면 첫 값, NVL2, ORDER BY 기본 ASC. 요령: 보기끼리 다른 부분만 밑줄(호열이 메모장 diff로 스스로 함)
   - 추가 8문항 5/8 — 틀림 3(LEFT JOIN 중복·DISTINCT 필요) · 4(UNION ALL = 두 표 전부 쌓기 7+4=11, DEPT 쪽 중복을 지움) · 5(INTERSECT 잊음). EXISTS/IN/NOT EXISTS는 NULL 영향 없고 NOT IN만 망가짐, 집합 연산에서 NULL은 그냥 값
   - **다음: 집합 연산 4종(UNION·UNION ALL·INTERSECT·MINUS) 짧게 다시 + 긴 지문 문제 계속, 그다음 2주차 윈도우 함수**
-  - 11-14 UNION/UNION ALL 시각화(쌓기 → 중복 제거), 꺼낸 열만 합침·같은 자리끼리·줄 전체가 같아야 중복. **집합 연산 긴 지문 8문항 출제(정답·해설 안 줌, 호열 요청)** — 표 ORD_2023/ORD_2024(cust,item), 정답은 scratchpad sqld/setops_key.txt (없으면 문제 다시 계산). 채점 대기
+  - 11-14 UNION/UNION ALL 시각화(쌓기 → 중복 제거), 꺼낸 열만 합침·같은 자리끼리·줄 전체가 같아야 중복. **집합 연산 긴 지문 8문항 출제(정답·해설 안 줌, 호열 요청)** — 표 ORD_2023/ORD_2024(cust,item), 정답 1④ 2② 3② 4① 5③ 6② 7④ 8②. **11-15 채점 6/8** (3: INTERSECT도 중복 제거인데 (A,펜) 2번인 보기 고름 · 7: 못 품 — MINUS는 (D,NULL)끼리 같다고 봐서 지움 vs NOT EXISTS·LEFT JOIN ON은 = 비교라 못 지움). 1·2·4·5·6·8 ✅, 6번 '줄 전체가 같아야 중복' 정확
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
