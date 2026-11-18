@@ -154,4 +154,5 @@
   - **다음: 1과목 데이터 모델링** (계획상 3단계, 엔터티·속성·관계·식별자·정규화·반정규화) + 2과목 약점 복습은 문제로 섞어서
   - 11-18 **3장 관리 구문으로 (1과목 모델링은 10문제라 뒤로, 호열 결정)**. 개념 정리(DML/DDL/DCL/TCL·제약조건·ALTER Oracle MODIFY vs SQL Server ALTER COLUMN·DELETE/TRUNCATE/DROP·FK 참조 동작·ACID·SAVEPOINT·Oracle DDL 자동 커밋·연산자 우선순위). 노랭이 99~126 질문: ALTER로 PK 나중 추가 OK · CASCADE=행째(DELETE는 행 단위)·규칙은 삭제 시 자동 실행 · MERGE(DELETE는 UPDATE된 행만·바뀐 값 기준 → 2건) · 단수형 권고·FK NULL 가능 · 입력 참조 동작 DEPENDENT/AUTOMATIC · DATE에 숫자 INSERT 오류 · TOP/PERCENT/WITH TIES · UPDATE SET 서브쿼리 WHERE 없으면 짝 없는 행 NULL
   - 관리 구문 20문항(쉬움12·어려움8, 정답 scratchpad sqld/mgmt_key.txt) **25분 17/20** — 틀림: 4·20 논리 연산자 우선순위 NOT>AND>OR(모름) · 11 UNIQUE는 NULL 허용(후보키와 혼동), FK NULL 가능 쪽이 틀린 문장. 13 MERGE·14 SAVEPOINT/DDL 자동커밋·7 CASCADE 사슬 정확
+  - **다음(11-19~): 노랭이 'SQL 고급 활용 및 튜닝' 장** (호열). 주의: 2024 개편 후 SQLD는 2과목 'SQL 기본과 활용'이라 옵티마이저·인덱스·조인 수행 원리가 범위에서 빠졌을 가능성 → dataq 출제 범위 확인 권장
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
