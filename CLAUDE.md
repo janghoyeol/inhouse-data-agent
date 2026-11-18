@@ -152,4 +152,6 @@
   - 11-18 LAG/LEAD(인자 자리: 열·n·기본값, 중간 생략 불가 LAG(x,,0) 오류) 확인 3문제 2/3(기본값 0 놓침), 'LAG DESC = LEAD ASC' 스스로 발견 · 윈도우 기본 개념(구성·4분류 순위/집계/순서/비율·사용 위치·특징) O/X 4/6 (틀림: RANGE 기본 vs ROWS 같은 값이면 다름 · LAG에 ROWS 범위 불가). FROM 인라인 뷰 SELECT에선 사용 가능
   - **노랭이 1~98 (SQL 2과목) 완주 (11-18).** 91~98은 권한·CUBE/ROLLUP·GROUPING·RANK, 틀린 1개 = GRANT/REVOKE: WITH GRANT OPTION 받은 사용자는 옵션 유무 상관없이 재허가 가능(⭕) · 객체 권한 REVOKE는 연쇄 취소(그래서 '연쇄 취소 안 된다'가 틀린 설명). WITH ADMIN OPTION(시스템 권한)은 연쇄 안 됨
   - **다음: 1과목 데이터 모델링** (계획상 3단계, 엔터티·속성·관계·식별자·정규화·반정규화) + 2과목 약점 복습은 문제로 섞어서
+  - 11-18 **3장 관리 구문으로 (1과목 모델링은 10문제라 뒤로, 호열 결정)**. 개념 정리(DML/DDL/DCL/TCL·제약조건·ALTER Oracle MODIFY vs SQL Server ALTER COLUMN·DELETE/TRUNCATE/DROP·FK 참조 동작·ACID·SAVEPOINT·Oracle DDL 자동 커밋·연산자 우선순위). 노랭이 99~126 질문: ALTER로 PK 나중 추가 OK · CASCADE=행째(DELETE는 행 단위)·규칙은 삭제 시 자동 실행 · MERGE(DELETE는 UPDATE된 행만·바뀐 값 기준 → 2건) · 단수형 권고·FK NULL 가능 · 입력 참조 동작 DEPENDENT/AUTOMATIC · DATE에 숫자 INSERT 오류 · TOP/PERCENT/WITH TIES · UPDATE SET 서브쿼리 WHERE 없으면 짝 없는 행 NULL
+  - 관리 구문 20문항(쉬움12·어려움8, 정답 scratchpad sqld/mgmt_key.txt) **25분 17/20** — 틀림: 4·20 논리 연산자 우선순위 NOT>AND>OR(모름) · 11 UNIQUE는 NULL 허용(후보키와 혼동), FK NULL 가능 쪽이 틀린 문장. 13 MERGE·14 SAVEPOINT/DDL 자동커밋·7 CASCADE 사슬 정확
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
