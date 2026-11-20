@@ -155,4 +155,8 @@
   - 11-18 **3장 관리 구문으로 (1과목 모델링은 10문제라 뒤로, 호열 결정)**. 개념 정리(DML/DDL/DCL/TCL·제약조건·ALTER Oracle MODIFY vs SQL Server ALTER COLUMN·DELETE/TRUNCATE/DROP·FK 참조 동작·ACID·SAVEPOINT·Oracle DDL 자동 커밋·연산자 우선순위). 노랭이 99~126 질문: ALTER로 PK 나중 추가 OK · CASCADE=행째(DELETE는 행 단위)·규칙은 삭제 시 자동 실행 · MERGE(DELETE는 UPDATE된 행만·바뀐 값 기준 → 2건) · 단수형 권고·FK NULL 가능 · 입력 참조 동작 DEPENDENT/AUTOMATIC · DATE에 숫자 INSERT 오류 · TOP/PERCENT/WITH TIES · UPDATE SET 서브쿼리 WHERE 없으면 짝 없는 행 NULL
   - 관리 구문 20문항(쉬움12·어려움8, 정답 scratchpad sqld/mgmt_key.txt) **25분 17/20** — 틀림: 4·20 논리 연산자 우선순위 NOT>AND>OR(모름) · 11 UNIQUE는 NULL 허용(후보키와 혼동), FK NULL 가능 쪽이 틀린 문장. 13 MERGE·14 SAVEPOINT/DDL 자동커밋·7 CASCADE 사슬 정확
   - **다음(11-19~): 노랭이 'SQL 고급 활용 및 튜닝' 장** (호열). 주의: 2024 개편 후 SQLD는 2과목 'SQL 기본과 활용'이라 옵티마이저·인덱스·조인 수행 원리가 범위에서 빠졌을 가능성 → dataq 출제 범위 확인 권장
+  - 11-18~19 자격증 계획: 2027 1분기 SQLD + ADsP + **AICE Associate**(파이썬 실기, 격월, 시험 중 공식 문서 7개만 참고 가능) · ADsP 교재 민트책 2027년판. 노랭이 끝나면 ADsP·AICE 문제도 출제(답 안 줌)
+  - 11-19 1과목 1장 이론(모델링·엔터티·속성·관계·식별자) → 호열 이해 정리 교정(물리 단계 = 값 아님, 행 추가는 스키마 변경 아님, 까마귀발 `<` = N) · 노랭이 1~25 19/25(틀림: 발생 시점에 관계 엔터티 없음·현업 용어 OK·최소 단위=속성·2정규화·표기 3요소에 식별성 X·색인=물리·관계는 동사)
+  - 11-20 2장 정규화 이론 + 13문항 **11/13** (틀림: 가짜 종속 '주문번호→수량', 2정규화 결과에 이행 종속 남음) · **최종 모의고사 1회 50문항 90분 출제** (정답 scratchpad sqld/mock1_key.txt, sqlite 검증) → **다음: 채점·해설**
+  - 공부 기록: sqld-study/modeling.md + README 갱신해 호열에게 줌
   - 공부 기록 파일(README·week1.md)을 만들어 호열에게 줌 → 호열이 직접 sqld-study 저장소에 올려 잔디로 (Claude 커밋은 호열 잔디에 안 잡힘, 날짜 조작 안 함)
